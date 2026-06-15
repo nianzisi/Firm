@@ -1,22 +1,103 @@
 """土地种植规则"""
 import time
 
-from data import Firm as Firm_Sheet, SeedRewardAssociation
-from data import Plan_Seed_Rewards, Plan_Seed, with_db
+from data import Firm as Firm_Sheet, SeedRewardAssociation, Item
+from data import Plan_Seed_Rewards, Plan_Seed, with_db, Backpack
+
+from error import *
 
 
-class Firm():
-    """土地实例化"""
+class Firm:
+    """土地组件，动作：创建，查询是否空地，种植"""
 
+    # 土地创建
     @with_db
-    def create_land(self, db=None):
+    def create_land(self, db=None) -> int:
+        """
+        创建新土地
+        :param db: 默认接口
+        :return: land.id
+        """
         land = Firm_Sheet()
         db.add(land)
-        return True, "land创建成功", land.id
+
+        return land.id
+
+    @with_db
+    def land(self, firm_id: int, db=None) -> dict | None:
+        """
+        查询土地
+        :param firm_id: 土地id
+        :param db: 默认接口
+        :return: {id，等级，时间，种子，收获倍率}
+        """
+        land = db.get(Firm_Sheet, firm_id)
+        if land is None:
+            raise LandNotFoundError(f"土地{firm_id}不存在")
+        msg = {"land.id": land.id,
+               "land.level": land.level,
+               "land.plan_time": land.plan_time,
+               "land.plan_id": land.plan_id,
+               "land.extra_amount": land.extra_amount}
+        return msg
+
+    def land_free(self, firm_id: int) -> bool:
+        """
+        查询土地是否为空
+        :param firm_id: id
+        :return: 空:Ture 非空:False
+        """
+        msg = self.land(firm_id)
+        if msg is not None and msg.get("land.plan_id") is None:
+            return True
+        else:
+            return False
+
+    @with_db
+    def plan_seed(self, *, firm_id: int, seed_id: int, db=None):
+        """
+        种植
+        :param firm_id:id
+        :param seed_id: id
+        :param db: 默认
+        :return:
+        """
+        seed = db.get(Plan_Seed, seed_id)
+        land = db.get(Firm_Sheet, firm_id)
+        land.plan_id = seed.id
+        from founction import maturity_time
+        land.plan_time = maturity_time(land_id=land.id, seed_id=seed.id)
+
+    @with_db
+    def clear_land(self, land_id: int, db=None) -> bool:
+        """
+        清空土地
+        :param land_id: id
+        :param db: 默认
+        :return: Ture
+        """
+        land = db.get(Firm_Sheet, land_id)
+        land.plan_id = None
+        return True
+
+
+class Seed:
+    """关于种子的"""
 
     @with_db
     def create_plan_seed(self, *, plan_name: str, plan_grade: int, mature_time: int, mature_amount: int,
-                         comment: str | None = None, db=None):
+                         comment: str | None = None, db=None) -> int:
+        """
+        创建新种子
+
+        :param plan_name: 名称
+        :param plan_grade: 等级
+        :param mature_time: 成熟时间
+        :param mature_amount: 基础倍数
+        :param comment: 备注
+        :param db: 默认接口
+        :return: plan_seed.id
+        """
         plan_seed = Plan_Seed(
             plan_name=plan_name,
             plan_grade=plan_grade,
@@ -27,20 +108,68 @@ class Firm():
 
         db.add(plan_seed)
         db.flush()
-        return True, "seed创建成功", plan_seed.id
+        return plan_seed.id
 
     @with_db
-    def create_plan_rewards(self, *, rewards_name: str, rewards_grade: int, db=None):
+    def seed(self, plan_id, db=None) -> dict | None:
+        """
+        查询种子
+        :param plan_id: id
+        :param db: 默认接口
+        :return: {id，名称，等级，成熟时间，基础数量，备注}
+        """
+        plan = db.get(Plan_Seed, plan_id)
+        if plan is None:
+            return None
+
+        msg = {"id": plan.id,
+               "name": plan.plan_name,
+               "grade": plan.plan_grade,
+               "mature_time": plan.mature_time,
+               "mature_amount": plan.mature_amount,
+               "comment": plan.comment}
+        return msg
+
+    def seed_empty(self, plan_id) -> bool:
+        """
+        查询种子是否存在
+        :param plan_id:id
+        :return: 空False，非空Ture
+        """
+        return self.seed(plan_id) is not None
+
+
+class Rewards:
+    """关于收获物的"""
+
+    @with_db
+    def create_plan_rewards(self, *, rewards_name: str, rewards_grade: int, db=None) -> int:
+        """
+        创建新的收获物
+
+
+        :param rewards_name: 名称
+        :param rewards_grade: 等级
+        :param db: 默认接口
+        :return: reward.id
+        """
         reward = Plan_Seed_Rewards(
             rewards_name=rewards_name,
             rewards_grade=rewards_grade,
         )
         db.add(reward)
         db.flush()
-        return True, "rewards创建成功", reward.id
+        return reward.id
 
     @with_db
-    def link_plan_rewards(self, *, plan_seed, rewards, db=None):
+    def link_plan_rewards(self, *, plan_seed: int, rewards: int, db=None) -> bool:
+        """
+        关联种子和收获物
+        :param plan_seed: plan_seed.id
+        :param rewards: rewards.id
+        :param db: 默认接口
+        :return: Ture
+        """
         association = SeedRewardAssociation(
             seed_id=plan_seed,
             reward_id=rewards,
@@ -49,97 +178,103 @@ class Firm():
         )
         db.add(association)
 
-        return True, "成功"
+        return True
 
     @with_db
-    def plan_plan_seed(self, *, plan_id, firm_id, db=None):
-        seed = db.get(Plan_Seed, plan_id)
-        land = db.get(Firm_Sheet, firm_id)
-        if not seed:
-            return False, "没有该种子"
-        if not land:
-            return False, "没有该土地"
-        if land.plan_id is not None:
-            return False, "该土地非空闲"
+    def addtobackpack(self, seed_id, db=None) -> bool:
+        """
+        收获
+        :param seed_id: id
+        :param db: 默认
+        :return: Ture
+        """
+        # 查询种子关联的所有收获物
+        results = db.query(
+            Plan_Seed_Rewards,
+            SeedRewardAssociation.rewards_amount,
+            SeedRewardAssociation.rewards_chance
+        ).join(
+            SeedRewardAssociation,
+            Plan_Seed_Rewards.id == SeedRewardAssociation.reward_id
+        ).filter(
+            SeedRewardAssociation.seed_id == seed_id
+        ).all()
 
-        land.plan_time = int(seed.mature_time / (1 + land.level * 0.1)) + int(time.time())
-        land.plan_id = seed.id
-        return True, f"{land.id}种植{seed.plan_name}成功"
+        for reward, amount, chance in results:
+            # 1. 查找或创建Item记录
+            item = db.query(Item).filter(Item.name == reward.rewards_name).first()
+            if not item:
+                # 如果Item不存在，创建新的
+                item = Item(
+                    name=reward.rewards_name,
+                    grade=reward.rewards_grade,
+                    shopping_price=None  # 收获物默认不可出售，或者根据需求设置
+                )
+                db.add(item)
+                db.flush()  # 获取item.id
 
-    @with_db
-    def get_reward(self, *, firm_id, db=None):
-        reward = db.get(Firm_Sheet, firm_id)
-        if reward.plan_id is None:
-            return False, "该土地没有种植"
-        if reward.plan_time <= int(time.time()):
-            return True, "成熟", reward.id
+            # 2. 检查背包是否已有该物品
+            backpack_item = db.query(Backpack).filter(
+                Backpack.item_id == item.id
+            ).first()
+
+            if backpack_item:
+                # 已有则增加数量
+                backpack_item.amount += amount
+            else:
+                # 没有则新增
+                backpack_item = Backpack(
+                    name=item.name,  # 冗余字段，方便查询
+                    amount=amount,
+                    item_id=item.id
+                )
+                db.add(backpack_item)
+        return True
+
+
+class Action(Firm, Seed, Rewards):
+    """逻辑动作：
+    种植，收获，添加收获物"""
+
+    def plan_plan(self, *, plan_id: int, firm_id: int) -> tuple[bool, str]:
+        """
+        完整的种植动作
+        :param plan_id:seed_id
+        :param firm_id: land_id
+        :return:
+        """
+        if not self.land_free(firm_id):
+            return False, "土地不存在|土地已种植"
+        if not self.seed_empty(plan_id):
+            return False, "种子不存在"
+        self.plan_seed(firm_id=firm_id, seed_id=plan_id)
+        return True, f"{firm_id}种植{plan_id}成功"
+
+    def reward(self, land_id: int) -> tuple[bool, str]:
+        """
+        完整的收获动作
+        :param land_id:id
+        :return:[bool,详细信息]
+        """
+
+        if self.land_free(land_id) is True:
+            return False, "土地空闲"
+        if self.land(land_id).get("land.plan_time") is None:
+            return False, "时间错误"
+        if self.land(land_id).get("land.plan_time") < time.time():
+            self.clear_land(land_id)
+            return True, f"{land_id}已获"
+        return False, "未知错误"
+
+    def get_rewards(self, land_id: int):
+        seed_id = self.land(land_id).get("land.plan_id")
+        status = self.reward(land_id)
+        if status[0]:
+            self.addtobackpack(seed_id)
+            return True, f"收获{land_id}成功"
         else:
-            return False, "未成熟"
-
-    @with_db
-    def rewards(self, *, firm_id, db=None):
-        if self.get_reward(firm_id)[0]:
-            # 1. 获取土地
-            land = db.get(Firm_Sheet, firm_id)
-
-            # 2. 获取种子
-            seed = land.plan_owner  # Plan_Seed 对象
-
-            # 3. 获取种子的所有奖励配置（从关联表）
-            associations = db.query(SeedRewardAssociation).filter(
-                SeedRewardAssociation.seed_id == seed.id
-            ).all()
-
-            # 4. 遍历并收获
-            import random
-            obtained = []
-
-            for assoc in associations:
-                # 获取奖励详情
-                reward = db.get(Plan_Seed_Rewards, assoc.reward_id)
-
-                # 根据概率判断是否获得
-                if random.random() <= assoc.rewards_chance:
-                    # 应用土地的额外收获倍率
-                    actual_amount = assoc.rewards_amount * (1 + land.extra_amount)
-
-                    obtained.append({
-                        'name': reward.rewards_name,
-                        'grade': reward.rewards_grade,
-                        'amount': actual_amount,
-                        'base_amount': assoc.rewards_amount,
-                        'chance': assoc.rewards_chance
-                    })
-
-                    print(f"收获 {reward.rewards_name} x{seed.mature_amount} (概率:{assoc.rewards_chance * 100}%)")
-                else:
-                    print(f"未获得 {reward.rewards_name} (概率:{assoc.rewards_chance * 100}%)")
-
-            # 清空土地
-            land.plan_id = None
-            land.plan_time = -1
-
-            return obtained
-        else:
-            print("未成熟或没有种植")
-            return []
+            return False, status[1]
 
 
 if __name__ == "__main__":
-    firm = Firm()
-    # 创建land
-    # firm.create_land()
-    # 创建种子及其关联
-    # A = firm.create_plan_seed(plan_name="灵草种子", plan_grade=0,
-    #                       mature_time=10, mature_amount=3,
-    #                       comment="随处可见灵草的种子")
-    # B = firm.create_plan_rewards(rewards_name="灵草", rewards_grade=0)
-    #
-    # print(type(A))
-    # print(type(A[2]))
-    # print(type(B[2]))
-    #
-    # firm.link_plan_rewards(A[2], B[2])
-    print(firm.plan_plan_seed(plan_id=4, firm_id=1))
-    print(firm.get_reward(firm_id=1))
-    firm.rewards(firm_id=1)
+    pass

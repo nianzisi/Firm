@@ -114,8 +114,7 @@ class Firm(Base):
     level:
     plan_id:
     plan_time:
-    extra_amount: 额外收获倍率
-    extra_mature: 额外生长速率"""
+    extra_amount: 额外收获倍率"""
 
     __tablename__ = "firm"
 
