@@ -1,4 +1,6 @@
-"""土地种植规则"""
+"""土地种植规则
+    涉及到提交的，由调用端统一传入db
+    仅查询可以直接忽略db传入"""
 import time
 
 from data import Firm as Firm_Sheet, SeedRewardAssociation, Item
@@ -236,9 +238,11 @@ class Action(Firm, Seed, Rewards):
     """逻辑动作：
     种植，收获，添加收获物"""
 
-    def plan_plan(self, *, plan_id: int, firm_id: int) -> tuple[bool, str]:
+    @with_db
+    def plan_plan(self, *, plan_id: int, firm_id: int, db=None) -> tuple[bool, str]:
         """
         完整的种植动作
+        :param db: 默认
         :param plan_id:seed_id
         :param firm_id: land_id
         :return:
@@ -247,12 +251,13 @@ class Action(Firm, Seed, Rewards):
             return False, "土地不存在|土地已种植"
         if not self.seed_empty(plan_id):
             return False, "种子不存在"
-        self.plan_seed(firm_id=firm_id, seed_id=plan_id)
+        self.plan_seed(firm_id=firm_id, seed_id=plan_id, db=db)
         return True, f"{firm_id}种植{plan_id}成功"
 
-    def reward(self, land_id: int) -> tuple[bool, str]:
+    def reward(self, land_id: int, *, db) -> tuple[bool, str]:
         """
         完整的收获动作
+        :param db: 默认
         :param land_id:id
         :return:[bool,详细信息]
         """
@@ -262,15 +267,22 @@ class Action(Firm, Seed, Rewards):
         if self.land(land_id).get("land.plan_time") is None:
             return False, "时间错误"
         if self.land(land_id).get("land.plan_time") < time.time():
-            self.clear_land(land_id)
-            return True, f"{land_id}已获"
+            self.clear_land(land_id, db=db)
+            return True, f"{land_id}已收获"
         return False, "未知错误"
 
-    def get_rewards(self, land_id: int):
+    @with_db
+    def get_rewards(self, land_id: int, db=None):
+        """
+        收获物品并添加到背包
+        :param land_id:
+        :param db:
+        :return:
+        """
         seed_id = self.land(land_id).get("land.plan_id")
-        status = self.reward(land_id)
+        status = self.reward(land_id, db=db)
         if status[0]:
-            self.addtobackpack(seed_id)
+            self.addtobackpack(seed_id, db=db)
             return True, f"收获{land_id}成功"
         else:
             return False, status[1]

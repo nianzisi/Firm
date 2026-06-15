@@ -21,6 +21,8 @@ def with_db(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
+        if 'db' in kwargs and kwargs['db'] is not None:
+            return func(*args, **kwargs)   # 复用外部 session
         db = SessionLocal()  # 创建新session
         try:
             result = func(*args, db=db, **kwargs)  # 注入db
