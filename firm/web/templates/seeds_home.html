@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>首页</title>
+</head>
+<body>
+    <div>
+        <i>创建植物</i>
+        <form action="/seeds/create_and_link" method="post">
+            <i>创建种子</i>
+            <label>
+                <input type="text" name="plan_name" placeholder="种子名称">
+            </label>
+            <label>
+                <input type="number" pattern="[0-9]+" name="plan_grade" placeholder="等级" title="只能输入数字">
+            </label>
+            <label>
+                <input type="number" pattern="[0-9]+" name="mature_time" placeholder="成长时间" title="只能输入数字">
+            </label>
+            <label>
+                <input type="number" pattern="[0-9]+" name="mature_amount" placeholder="基础倍率" title="只能输入数字">
+            </label>
+            <label>
+                <input type="text" name="comment" placeholder="备注">
+            </label>
+        <i>创建收获物</i>
+            <label>
+                <input type="text" name="reward_name" placeholder="名称" >
+            </label>
+            <label>
+                <input type="number" name="rewards_grade" placeholder="等级" pattern="[0-9]+" title="只能输入数字">
+            </label>
+            <button>创建</button>
+        </form>
+        <i>创建植物</i>
+        <form action="/seeds/link" method="post">
+            <label>
+                <input type="number" pattern="[0-9]+" placeholder="种子id">
+            </label>
+            <label>
+                <input type="number" pattern="[0-9]+" placeholder="收获物id">
+            </label>
+        </form>
+        <i>创建种子</i>
+        <form action="/seeds/create" method="post">
+            <label>
+                <input type="text" name="plan_name" placeholder="种子名称">
+            </label>
+            <label>
+                <input type="number" pattern="[0-9]+" name="plan_grade" placeholder="等级" title="只能输入数字">
+            </label>
+            <label>
+                <input type="number" pattern="[0-9]+" name="mature_time" placeholder="成长时间" title="只能输入数字">
+            </label>
+            <label>
+                <input type="number" pattern="[0-9]+" name="mature_amount" placeholder="基础倍率" title="只能输入数字">
+            </label>
+            <label>
+                <input type="text" name="comment" placeholder="备注">
+            </label>
+            <button>创建</button>
+        </form>
+        <i>创建收获物</i>
+        <form action="/seeds/create_rewards" method="post">
+            <label>
+                <input type="text" name="reward_name" placeholder="名称" >
+            </label>
+            <label>
+                <input type="number" name="rewards_grade" placeholder="等级" pattern="[0-9]+" title="只能输入数字">
+            </label>
+            <button>创建</button>
+        </form>
+
+    </div>
+</body>
+</html>
