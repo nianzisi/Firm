@@ -1,6 +1,7 @@
 """FastAPI Web 应用"""
 from typing import Optional
 
+import uvicorn
 from fastapi import FastAPI, Form, Query, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -83,3 +84,7 @@ def search_items(name: str = Query(""),
         grade=grade,
         shopping_price=shopping_price,
     )
+
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="localhost", port=8000, reload=True)

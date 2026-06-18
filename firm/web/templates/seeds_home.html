@@ -1,77 +1,176 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>首页</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GM 管理后台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, 'Segoe UI', sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e0;
+            padding: 32px 24px;
+        }
+        h1 { font-size: 20px; color: #fff; margin-bottom: 24px; }
+        h1 small { font-size: 13px; color: #888; font-weight: 400; margin-left: 8px; }
+        .layout { display: flex; gap: 16px; align-items: flex-start; max-width: 1200px; }
+        .layout-left { flex: 1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; min-width: 0; }
+        .layout-right { width: 340px; flex-shrink: 0; }
+        @media (max-width: 900px) {
+            .layout { flex-direction: column; }
+            .layout-left { grid-template-columns: 1fr; }
+            .layout-right { width: 100%; }
+        }
+        .card {
+            background: #1a1a2e;
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid #2a2a44;
+        }
+        .card h2 {
+            font-size: 14px;
+            color: #a0a0c0;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #2a2a44;
+        }
+        .field { margin-bottom: 10px; }
+        .field label {
+            display: block;
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 3px;
+        }
+        .field input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #2a2a44;
+            border-radius: 6px;
+            background: #0f0f1a;
+            color: #e0e0e0;
+            font-size: 13px;
+            outline: none;
+        }
+        .field input:focus { border-color: #4a6cf7; }
+        .btn {
+            width: 100%;
+            padding: 8px 0;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            background: #4a6cf7;
+            color: #fff;
+            margin-top: 4px;
+        }
+        .btn:hover { background: #3b5de7; }
+        .btn-green { background: #2d8a4e; }
+        .btn-green:hover { background: #257a42; }
+        hr { border: none; border-top: 1px solid #2a2a44; margin: 16px 0; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { padding: 6px 8px; text-align: left; border-bottom: 1px solid #2a2a44; color: #888; font-size: 12px; }
+        td { padding: 6px 8px; border-bottom: 1px solid #1a1a2e; }
+    </style>
 </head>
 <body>
-    <div>
-        <i>创建植物</i>
-        <form action="/seeds/create_and_link" method="post">
-            <i>创建种子</i>
-            <label>
-                <input type="text" name="plan_name" placeholder="种子名称">
-            </label>
-            <label>
-                <input type="number" pattern="[0-9]+" name="plan_grade" placeholder="等级" title="只能输入数字">
-            </label>
-            <label>
-                <input type="number" pattern="[0-9]+" name="mature_time" placeholder="成长时间" title="只能输入数字">
-            </label>
-            <label>
-                <input type="number" pattern="[0-9]+" name="mature_amount" placeholder="基础倍率" title="只能输入数字">
-            </label>
-            <label>
-                <input type="text" name="comment" placeholder="备注">
-            </label>
-        <i>创建收获物</i>
-            <label>
-                <input type="text" name="reward_name" placeholder="名称" >
-            </label>
-            <label>
-                <input type="number" name="rewards_grade" placeholder="等级" pattern="[0-9]+" title="只能输入数字">
-            </label>
-            <button>创建</button>
-        </form>
-        <i>创建植物</i>
-        <form action="/seeds/link" method="post">
-            <label>
-                <input type="number" pattern="[0-9]+" placeholder="种子id">
-            </label>
-            <label>
-                <input type="number" pattern="[0-9]+" placeholder="收获物id">
-            </label>
-        </form>
-        <i>创建种子</i>
-        <form action="/seeds/create" method="post">
-            <label>
-                <input type="text" name="plan_name" placeholder="种子名称">
-            </label>
-            <label>
-                <input type="number" pattern="[0-9]+" name="plan_grade" placeholder="等级" title="只能输入数字">
-            </label>
-            <label>
-                <input type="number" pattern="[0-9]+" name="mature_time" placeholder="成长时间" title="只能输入数字">
-            </label>
-            <label>
-                <input type="number" pattern="[0-9]+" name="mature_amount" placeholder="基础倍率" title="只能输入数字">
-            </label>
-            <label>
-                <input type="text" name="comment" placeholder="备注">
-            </label>
-            <button>创建</button>
-        </form>
-        <i>创建收获物</i>
-        <form action="/seeds/create_rewards" method="post">
-            <label>
-                <input type="text" name="reward_name" placeholder="名称" >
-            </label>
-            <label>
-                <input type="number" name="rewards_grade" placeholder="等级" pattern="[0-9]+" title="只能输入数字">
-            </label>
-            <button>创建</button>
-        </form>
-
+    <h1>🌾 GM 管理后台 <small>种子 / 物品 / 奖励</small></h1>
+    <div class="layout">
+        <div class="layout-left">
+            <div class="card">
+                <h2>🌱 创建植物（完整）</h2>
+                <form action="/seeds/create_and_link" method="post">
+                    <div class="field"><label>种子名称</label><input type="text" name="plan_name" placeholder="例：灵草种子" required></div>
+                    <div class="field"><label>种子等级</label><input type="number" name="plan_grade" value="1"></div>
+                    <div class="field"><label>种子价格</label><input type="number" name="plan_price" placeholder="留空=不可出售"></div>
+                    <div class="field"><label>成长时间（秒）</label><input type="number" name="mature_time" required></div>
+                    <div class="field"><label>基础产量</label><input type="number" name="mature_amount" value="1"></div>
+                    <hr>
+                    <div class="field"><label>收获物名称</label><input type="text" name="reward_name" placeholder="例：灵草" required></div>
+                    <div class="field"><label>收获物等级</label><input type="number" name="rewards_grade" value="1"></div>
+                    <div class="field"><label>收获物价格</label><input type="number" name="rewards_price" placeholder="留空=不可出售"></div>
+                    <button class="btn btn-green">创建</button>
+                </form>
+            </div>
+            <div class="card">
+                <h2>🔗 关联种子 ↔ 奖励</h2>
+                <form action="/seeds/link" method="post">
+                    <div class="field"><label>种子 ID</label><input type="number" name="seed_id" placeholder="plan_seed.id" required></div>
+                    <div class="field"><label>物品 ID（收获物）</label><input type="number" name="reward_id" placeholder="item.id" required></div>
+                    <button class="btn">关联</button>
+                </form>
+            </div>
+            <div class="card">
+                <h2>🌰 创建种子（仅参数）</h2>
+                <form action="/seeds/create" method="post">
+                    <div class="field"><label>物品 ID</label><input type="number" name="item_id" placeholder="item.id" required></div>
+                    <div class="field"><label>成长时间（秒）</label><input type="number" name="mature_time" required></div>
+                    <div class="field"><label>基础产量</label><input type="number" name="mature_amount" value="1"></div>
+                    <button class="btn">创建</button>
+                </form>
+            </div>
+            <div class="card">
+                <h2>📦 创建物品定义</h2>
+                <form action="/seeds/create_items" method="post">
+                    <div class="field"><label>物品名称</label><input type="text" name="name" placeholder="例：灵草" required></div>
+                    <div class="field"><label>品阶</label><input type="number" name="grade" value="1"></div>
+                    <div class="field"><label>出售价格</label><input type="number" name="shopping_price" placeholder="留空=不可出售"></div>
+                    <button class="btn">创建</button>
+                </form>
+            </div>
+        </div>
+        <div class="layout-right">
+            <div class="card">
+                <h2>🔍 物品搜索</h2>
+                <input id="searchInput" oninput="search()" placeholder="输入物品名称..." style="width:100%;padding:10px 12px;border:1px solid #2a2a44;border-radius:6px;background:#0f0f1a;color:#e0e0e0;font-size:14px;outline:none;margin-bottom:14px;">
+                <table>
+                    <thead><tr><th>ID</th><th>名称</th><th>品阶</th><th>价格</th></tr></thead>
+                    <tbody id="resultBody">
+                        <tr><td colspan="4" style="text-align:center;color:#555;padding:20px;">输入名称开始搜索</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
+
+    <script>
+        let timer = null;
+
+        function search() {
+            clearTimeout(timer);
+            timer = setTimeout(fetchItems, 250);
+        }
+
+        async function fetchItems() {
+            const name = document.getElementById("searchInput").value.trim();
+            const tbody = document.getElementById("resultBody");
+
+            if (!name) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#555;padding:20px;">输入名称开始搜索</td></tr>';
+                return;
+            }
+
+            try {
+                const resp = await fetch(`/api/items/search?name=${encodeURIComponent(name)}`);
+                const data = await resp.json();
+                tbody.innerHTML = "";
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#666;padding:20px;">无结果</td></tr>';
+                } else {
+                    for (const item of data) {
+                        tbody.innerHTML += `<tr>
+                            <td>${item.id}</td>
+                            <td>${item.name}</td>
+                            <td>${item.grade}</td>
+                            <td>${item.shopping !== null ? item.shopping : '不可出售'}</td>
+                        </tr>`;
+                    }
+                }
+            } catch (_) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#c44;padding:20px;">搜索失败，请检查服务</td></tr>';
+            }
+        }
+    </script>
 </body>
 </html>
