@@ -2,7 +2,8 @@
 from functools import wraps
 from typing import Optional, List
 
-from sqlalchemy import create_engine, Column, Integer, String, LargeBinary, DateTime, ForeignKey, Computed
+from sqlalchemy import create_engine, Column, Integer, String, LargeBinary, DateTime, ForeignKey, Computed, \
+    UniqueConstraint
 from sqlalchemy.orm import declarative_base, sessionmaker, Mapped, mapped_column, relationship
 
 from datetime import datetime
@@ -103,6 +104,10 @@ class SeedRewardAssociation(Base):
     seed: Mapped["Plan_Seed"] = relationship(back_populates="rewards")
     item: Mapped["Item"] = relationship(back_populates="reward_associations")
 
+    __table_args__ = (
+        UniqueConstraint('seed_id', 'item_id', name='uq_seed_reward'),  # 组合唯一约束
+    )
+
 
 # ============================================
 # 3. 种子主表（一对多中的"一"方）
@@ -118,7 +123,8 @@ class Plan_Seed(Base):
 
     item_id: Mapped[int] = mapped_column(ForeignKey(
         "item.id",
-        ondelete="SET NULL"),
+        ondelete='CASCADE'),
+        unique=True,
         nullable=False)
 
     # item
@@ -178,6 +184,7 @@ class Backpack(Base):
 
 if __name__ == "__main__":
     # 创建表
+
+    Base.metadata.drop_all(engine)  # 删除所有表（危险！会清空数据）
     Base.metadata.create_all(engine)
-    # Base.metadata.drop_all(engine)  # 删除所有表（危险！会清空数据）
     print("表创建成功！")

@@ -14,6 +14,8 @@ class Item:
 
     @with_db
     def create_item(self, *, name, grade, shopping_price, db=None) -> int:
+        if item := db.query(Item_Sheet).filter(Item_Sheet.name == name).first():
+            return item.id
         item = Item_Sheet(
             name=name,
             grade=grade,
@@ -162,6 +164,8 @@ class Seed:
         :param db: 默认接口
         :return: plan_seed.id
         """
+        if seed := db.query(Plan_Seed).filter(Plan_Seed.item_id == item_id).first():
+            return seed.id
         plan_seed = Plan_Seed(
             item_id=item_id,
             mature_time=mature_time,
@@ -208,8 +212,12 @@ class Rewards:
         :param plan_seed: plan_seed.id
         :param item_id: rewards.id
         :param db: 默认接口
-        :return: Ture
+        :return: bool
         """
+        if db.query(SeedRewardAssociation).filter(SeedRewardAssociation.seed_id == plan_seed,
+                                                  SeedRewardAssociation.item_id == item_id,
+                                                  ).first():
+            return False
         association = SeedRewardAssociation(
             seed_id=plan_seed,
             item_id=item_id,
