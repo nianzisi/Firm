@@ -1,5 +1,7 @@
 """FastAPI Web 应用"""
-from fastapi import FastAPI, Form, Request
+from typing import Optional
+
+from fastapi import FastAPI, Form, Query, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 import pathlib
@@ -14,55 +16,70 @@ action = Action()
 
 @app.get("/seeds")
 def seeds_home(request: Request):
-    return templates.TemplateResponse("seeds_home",
+    return templates.TemplateResponse(request,
+                                      "seeds_home.html",
                                       {"request": request, "title": "首页"})
 
 
 @app.post("/seeds/create_and_link")
 async def create_and_link(plan_name: str = Form(...),
                           plan_grade: int = Form(1),
+                          plan_price: Optional[int] = Form(None),
                           mature_time: int = Form(...),
                           mature_amount: int = Form(1),
-                          comment: str = Form("无备注"),
                           reward_name: str = Form(...),
-                          rewards_grade: int = Form(1)
+                          rewards_grade: int = Form(1),
+                          rewards_price: Optional[int] = Form(None)
                           ):
-    seed_id = action.create_plan_seed(plan_name=plan_name,
-                                      plan_grade=plan_grade,
-                                      mature_time=mature_time,
+    item_id = action.create_item(name=plan_name,
+                                 grade=plan_grade,
+                                 shopping_price=plan_price
+                                 )
+    seed_id = action.create_plan_seed(item_id=item_id,
                                       mature_amount=mature_amount,
-                                      comment=comment)
-    reward_id = action.create_plan_rewards(reward_name=reward_name,
-                                           rewards_grade=rewards_grade)
-    action.link_plan_rewards(plan_seed=seed_id, rewards=reward_id)
+                                      mature_time=mature_time)
+    reward_id = action.create_item(name=reward_name,
+                                   grade=rewards_grade,
+                                   shopping_price=rewards_price)
+    action.link_plan_rewards(plan_seed=seed_id, item_id=reward_id)
     return RedirectResponse("/seeds", status_code=303)
 
 
 @app.post("/seeds/link")
 async def link(seed_id: int = Form(...),
                reward_id: int = Form(...)):
-    action.link_plan_rewards(plan_seed=seed_id, rewards=reward_id)
+    action.link_plan_rewards(plan_seed=seed_id, item_id=reward_id)
     return RedirectResponse("/seeds", status_code=303)
 
 
 @app.post("/seeds/create")
-async def create(plan_name: str = Form(...),
-                 plan_grade: int = Form(1),
+async def create(item_id: int = Form(...),
                  mature_time: int = Form(...),
-                 mature_amount: int = Form(1),
-                 comment: str = Form("无备注"),
+                 mature_amount: int = Form(1)
                  ):
-    action.create_plan_seed(plan_name=plan_name,
-                            plan_grade=plan_grade,
+    action.create_plan_seed(item_id=item_id,
                             mature_time=mature_time,
-                            mature_amount=mature_amount,
-                            comment=comment)
+                            mature_amount=mature_amount
+                            )
     return RedirectResponse("/seeds", status_code=303)
 
 
-@app.post("/seeds/create_rewards")
-async def create_rewards(reward_name: str = Form(...),
-                         rewards_grade: int = Form(1)):
-    action.create_plan_rewards(reward_name=reward_name,
-                               rewards_grade=rewards_grade)
+@app.post("/seeds/create_items")
+async def create_item(name: str = Form(...),
+                      grade: int = Form(1),
+                      shopping_price: Optional[int] = Form(None)):
+    action.create_item(name=name,
+                       grade=grade,
+                       shopping_price=shopping_price)
     return RedirectResponse("/seeds", status_code=303)
+
+
+@app.get("/api/items/search")
+def search_items(name: str = Query(""),
+                 grade: int = Query(None),
+                 shopping_price: int = Query(None)):
+    return action.search_item(
+        name=name or None,
+        grade=grade,
+        shopping_price=shopping_price,
+    )

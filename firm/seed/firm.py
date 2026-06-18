@@ -3,10 +3,10 @@
     仅查询可以直接忽略db传入"""
 import time
 
-from data import Firm as Firm_Sheet, SeedRewardAssociation, Item as Item_Sheet
-from data import Plan_Seed, with_db, Backpack
+from .data import Firm as Firm_Sheet, SeedRewardAssociation, Item as Item_Sheet
+from .data import Plan_Seed, with_db, Backpack
 
-from error import *
+from .error import *
 
 
 class Item:
@@ -29,35 +29,33 @@ class Item:
                     name=None | str,
                     grade=None | str,
                     shopping_price=None | str,
-                    db=None) -> dict[str, dict]:
+                    db=None) -> list[dict, dict]:
         """
         支持多段搜索(至少有一个)
         :param name: 名称
         :param grade: 等级
         :param shopping_price: 价格
         :param db: 默认
-        :return: {"int":{"any":any}} 0 表示错误
+        :return: [{},{}] ,[] 表示错误
         """
+        msg: list = []
         query = db.query(Item_Sheet)
         if name:
-            query = query.filter(Item_Sheet.name == name)
+            query = query.filter(Item_Sheet.name.contains(name))
         if grade:
             query = query.filter(Item_Sheet.grade == grade)
         if shopping_price:
             query = query.filter(Item_Sheet.shopping_price == shopping_price)
         if not name and not grade and not shopping_price:
-            return {"0": {"False": False}}
+            return []
         result = query.all()
-        msg = {}
-        order = 0
         for one in result:
-            order += 1
-            msg[f"{order}"] = {
+            msg.append({
                 "id": one.id,
                 "name": one.name,
                 "grade": one.grade,
                 "shopping": one.shopping_price
-            }
+            })
         return msg
 
     @with_db
@@ -153,17 +151,19 @@ class Seed:
     """关于种子的"""
 
     @with_db
-    def create_plan_seed(self, *, mature_time: int, mature_amount: int,
+    def create_plan_seed(self, *, item_id: int, mature_time: int, mature_amount: int,
                          db=None) -> int:
         """
         创建新种子
 
+        :param item_id: id
         :param mature_time: 成熟时间
         :param mature_amount: 基础倍数
         :param db: 默认接口
         :return: plan_seed.id
         """
         plan_seed = Plan_Seed(
+            item_id=item_id,
             mature_time=mature_time,
             mature_amount=mature_amount
         )
@@ -257,7 +257,7 @@ class Rewards:
         return True
 
 
-class Action(Firm, Seed, Rewards):
+class Action(Firm, Seed, Rewards, Item):
     """逻辑动作：
     种植，收获，添加收获物"""
 

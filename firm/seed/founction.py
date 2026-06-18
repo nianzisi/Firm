@@ -1,7 +1,7 @@
 """关于植物的各类计算"""
 import time
 
-from data_space import Data
+from .data_space import Data
 
 
 def maturity_time(*, land_id: int, seed_id: int) -> int:
