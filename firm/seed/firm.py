@@ -122,19 +122,22 @@ class Firm:
             return False
 
     @with_db
-    def plan_seed(self, *, firm_id: int, seed_id: int, db=None):
+    def plan_seed(self, *, firm_id: int, seed_id: int, db=None) -> bool:
         """
         种植
         :param firm_id:id
         :param seed_id: id
         :param db: 默认
-        :return:
+        :return: bool
         """
         seed = db.get(Plan_Seed, seed_id)
         land = db.get(Firm_Sheet, firm_id)
-        land.plan_id = seed.id
-        from founction import maturity_time
-        land.plan_time = maturity_time(land_id=land.id, seed_id=seed.id)
+        if seed and land:
+            land.plan_id = seed.id
+            from founction import maturity_time
+            land.plan_time = maturity_time(land_id=land.id, seed_id=seed.id)
+            return True
+        return False
 
     @with_db
     def clear_land(self, land_id: int, db=None) -> bool:
@@ -145,8 +148,11 @@ class Firm:
         :return: Ture
         """
         land = db.get(Firm_Sheet, land_id)
-        land.plan_id = None
-        return True
+        if land:
+            if land.plan_id:
+                land.plan_id = None
+                return True
+        return False
 
 
 class Seed:
@@ -229,7 +235,7 @@ class Rewards:
         return True
 
     @with_db
-    def addtobackpack(self, seed_id, db=None) -> bool:
+    def add_to_backpack(self, seed_id, db=None) -> bool:
         """
         收获
         :param seed_id: id
@@ -303,7 +309,7 @@ class Action(Firm, Seed, Rewards, Item):
         return False, "未知错误"
 
     @with_db
-    def get_rewards(self, land_id: int, db=None):
+    def get_rewards(self, land_id: int, db=None) -> tuple[bool, str]:
         """
         收获物品并添加到背包
         :param land_id:
@@ -313,7 +319,7 @@ class Action(Firm, Seed, Rewards, Item):
         seed_id = self.land(land_id).get("land.plan_id")
         status = self.reward(land_id, db=db)
         if status[0]:
-            self.addtobackpack(seed_id, db=db)
+            self.add_to_backpack(seed_id, db=db)
             return True, f"收获{land_id}成功"
         else:
             return False, status[1]
