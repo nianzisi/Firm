@@ -1,5 +1,6 @@
 """数据"""
 from functools import wraps
+from typing import Optional, List
 
 from sqlalchemy import create_engine, Column, Integer, String, LargeBinary, DateTime, ForeignKey, Computed
 from sqlalchemy.orm import declarative_base, sessionmaker, Mapped, mapped_column, relationship
@@ -22,7 +23,7 @@ def with_db(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         if 'db' in kwargs and kwargs['db'] is not None:
-            return func(*args, **kwargs)   # 复用外部 session
+            return func(*args, **kwargs)  # 复用外部 session
         db = SessionLocal()  # 创建新session
         try:
             result = func(*args, db=db, **kwargs)  # 注入db
@@ -48,118 +49,131 @@ class User(Base):
     __tablename__ = "user"
 
     id: Mapped[int] = mapped_column(primary_key=True, nullable=False)  # 主键
-    name: Mapped[str] = mapped_column(String(20), nullable=False)
+    name: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
     password: Mapped[bytes] = mapped_column(LargeBinary(255), nullable=False)
     creat_time: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     token: Mapped[bytes] = mapped_column(LargeBinary(255), nullable=True)
     token_exist_time: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
 
-class Plan_Seed(Base):
-    """植物种子
-    id:
-    plan_name:名称
-    plan_grade:1->2->3->4->5…………品质等级
-    mature_time:成长时间
-    mature_amount:数量
-    comment:备注"""
-
-    __tablename__ = "plan_seed"
-
-    id: Mapped[int] = mapped_column(primary_key=True, nullable=False)  # 主键
-    plan_name: Mapped[str] = mapped_column(String(20), nullable=False)
-    plan_grade: Mapped[int] = mapped_column(nullable=False, default=1)
-    mature_time: Mapped[int] = mapped_column(nullable=False)
-    mature_amount: Mapped[int] = mapped_column(nullable=False)
-    comment: Mapped[str] = mapped_column(String(255), nullable=True)
-
-    seed_owner: Mapped[list["Plan_Seed_Rewards"]] = relationship("Plan_Seed_Rewards",
-                                                                 secondary='seed_reward_association',
-                                                                 back_populates="rewards_owner")
-    firm_owner: Mapped[list["Firm"]] = relationship("Firm", back_populates="plan_owner")
-
-
-class SeedRewardAssociation(Base):
-    """ Plan_Seed与Plan_Seed_Rewards的关联表
-    rewards_amount:数量
-    rewards_chance:概率
-    """
-    __tablename__ = 'seed_reward_association'
-
-    seed_id: Mapped[int] = mapped_column(ForeignKey('plan_seed.id'), primary_key=True)
-    reward_id: Mapped[int] = mapped_column(ForeignKey('plan_seed_rewards.id'), primary_key=True)
-    rewards_amount: Mapped[int] = mapped_column(nullable=False)
-    rewards_chance: Mapped[float] = mapped_column(nullable=False)
-
-
-class Plan_Seed_Rewards(Base):
-    """植物收获物品
-    id:
-    rewards_name:名称
-    rewards_grade:品阶"""
-
-    __tablename__ = "plan_seed_rewards"
-
-    id: Mapped[int] = mapped_column(primary_key=True, nullable=False)  # 主键
-    rewards_name: Mapped[str] = mapped_column(String(20), nullable=False)
-    rewards_grade: Mapped[int] = mapped_column(nullable=False, default=1)
-
-
-    rewards_owner: Mapped[list["Plan_Seed"]] = relationship("Plan_Seed",
-                                                            secondary='seed_reward_association',
-                                                            back_populates="seed_owner")
-
-
-class Firm(Base):
-    """土地表
-    id:
-    level:
-    plan_id:
-    plan_time:
-    extra_amount: 额外收获倍率"""
-
-    __tablename__ = "firm"
-
-    id: Mapped[int] = mapped_column(primary_key=True, nullable=False)  # 主键
-    level: Mapped[int] = mapped_column(nullable=False, default=0)
-    plan_time: Mapped[int] = mapped_column(nullable=False, default=-1)
-    extra_amount: Mapped[int] = mapped_column(nullable=False, default=0)
-
-    plan_id: Mapped[int | None] = mapped_column(ForeignKey("plan_seed.id", ), nullable=True, default=None)
-    plan_owner = relationship("Plan_Seed", back_populates="firm_owner")
-
-
-class Backpack(Base):
-    """背包
-    id：
-    name：
-    amount：
-    """
-    __tablename__ = "backpack"
-
-    id: Mapped[int] = mapped_column(primary_key=True, nullable=False)  # 主键
-    name: Mapped[str] = mapped_column(String(20), nullable=False)
-    amount: Mapped[int] = mapped_column(nullable=False, default=0)
-
-
-    item_id: Mapped[int] = mapped_column(ForeignKey("items.id"), nullable=False)
-    # 关联物品基础信息
-    item: Mapped["Item"] = relationship(back_populates="backpack_items")
-
-
 class Item(Base):
-    """物品基础信息表（静态属性）
-        shopping：None 未不可出售，数字为价格"""
-    __tablename__ = "items"
+    """物品基础信息表（静态属性）"""
+    __tablename__ = "item"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
     grade: Mapped[int] = mapped_column(nullable=False, default=1)
-    shopping_price: Mapped[int] = mapped_column(nullable=True)  # NULL表示不可出售
+    shopping_price: Mapped[Optional[int]] = mapped_column(nullable=True, default=None)  # NULL 表示不可出售
 
-    # 关联背包记录
-    backpack_items: Mapped[list["Backpack"]] = relationship(back_populates="item", cascade="all, delete-orphan")
+    # 种子
+    seed_items: Mapped["Plan_Seed"] = relationship(
+        back_populates="item",
+        cascade="all, delete-orphan"
+    )
 
+    # 关系（一对多）收获物
+    reward_associations: Mapped[List["SeedRewardAssociation"]] = relationship(
+        back_populates="item",
+        cascade="all, delete-orphan"
+    )
+    # 背包
+    backpack_items: Mapped[List["Backpack"]] = relationship(
+        back_populates="item",
+        cascade="all, delete-orphan"
+    )
+
+
+# ============================================
+# 2. 种子奖励关联表（一对多中的"多"方）
+# ============================================
+class SeedRewardAssociation(Base):
+    """种子的奖励配置（一个种子可以有多条奖励）"""
+    __tablename__ = 'seed_reward_association'
+
+    id: Mapped[int] = mapped_column(primary_key=True)  # ✅ 加个自增主键，方便管理
+
+    rewards_amount: Mapped[int] = mapped_column(nullable=False)
+    rewards_chance: Mapped[float] = mapped_column(nullable=False)
+
+    # 外键
+    seed_id: Mapped[int] = mapped_column(ForeignKey('plan_seed.id'), nullable=False)
+    item_id: Mapped[int] = mapped_column(ForeignKey('item.id'), nullable=False)
+
+    # 关系
+    seed: Mapped["Plan_Seed"] = relationship(back_populates="rewards")
+    item: Mapped["Item"] = relationship(back_populates="reward_associations")
+
+
+# ============================================
+# 3. 种子主表（一对多中的"一"方）
+# ============================================
+class Plan_Seed(Base):
+    """植物种子"""
+    __tablename__ = "plan_seed"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    mature_time: Mapped[int] = mapped_column(nullable=False)
+    mature_amount: Mapped[int] = mapped_column(nullable=False)
+    comment: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+
+    item_id: Mapped[int] = mapped_column(ForeignKey(
+        "item.id",
+        ondelete="SET NULL"),
+        nullable=False)
+
+    # item
+    item: Mapped["Item"] = relationship(back_populates="seed_items")
+
+    # 关系（一对多）
+    rewards: Mapped[List["SeedRewardAssociation"]] = relationship(
+        back_populates="seed",
+        cascade="all, delete-orphan"  # 删除种子时自动删除奖励配置
+    )
+    firms: Mapped[List["Firm"]] = relationship(
+        back_populates="plan_owner",
+        cascade="all, delete-orphan"  # 删除种子时自动删除关联的土地
+    )
+
+
+# ============================================
+# 4. 土地表
+# ============================================
+class Firm(Base):
+    """土地表"""
+    __tablename__ = "firm"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    level: Mapped[int] = mapped_column(nullable=False, default=0)
+    plan_time: Mapped[int] = mapped_column(nullable=False, default=-1)
+    extra_amount: Mapped[int] = mapped_column(nullable=False, default=0)
+
+    plan_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("plan_seed.id", ondelete="SET NULL"),  # ✅ 删除种子时，土地保留但 plan_id 置 NULL
+        nullable=True,
+        default=None
+    )
+
+    # 关系
+    plan_owner: Mapped[Optional["Plan_Seed"]] = relationship(
+        back_populates="firms"
+    )
+
+
+# ============================================
+# 5. 背包表
+# ============================================
+class Backpack(Base):
+    """背包"""
+    __tablename__ = "backpack"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(20), nullable=False)
+    amount: Mapped[int] = mapped_column(nullable=False, default=0)
+
+    item_id: Mapped[int] = mapped_column(ForeignKey("item.id"), nullable=False)
+
+    # 关系
+    item: Mapped["Item"] = relationship(back_populates="backpack_items")
 
 
 if __name__ == "__main__":

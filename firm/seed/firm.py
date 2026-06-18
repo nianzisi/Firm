@@ -3,10 +3,76 @@
     仅查询可以直接忽略db传入"""
 import time
 
-from data import Firm as Firm_Sheet, SeedRewardAssociation, Item
-from data import Plan_Seed_Rewards, Plan_Seed, with_db, Backpack
+from data import Firm as Firm_Sheet, SeedRewardAssociation, Item as Item_Sheet
+from data import Plan_Seed, with_db, Backpack
 
 from error import *
+
+
+class Item:
+    """关于物品的操作 """
+
+    @with_db
+    def create_item(self, *, name, grade, shopping_price, db=None) -> int:
+        item = Item_Sheet(
+            name=name,
+            grade=grade,
+            shopping_price=shopping_price,
+        )
+        db.add(item)
+        db.flush()
+        return item.id
+
+    @with_db
+    def search_item(self,
+                    *,
+                    name=None | str,
+                    grade=None | str,
+                    shopping_price=None | str,
+                    db=None) -> dict[str, dict]:
+        """
+        支持多段搜索(至少有一个)
+        :param name: 名称
+        :param grade: 等级
+        :param shopping_price: 价格
+        :param db: 默认
+        :return: {"int":{"any":any}} 0 表示错误
+        """
+        query = db.query(Item_Sheet)
+        if name:
+            query = query.filter(Item_Sheet.name == name)
+        if grade:
+            query = query.filter(Item_Sheet.grade == grade)
+        if shopping_price:
+            query = query.filter(Item_Sheet.shopping_price == shopping_price)
+        if not name and not grade and not shopping_price:
+            return {"0": {"False": False}}
+        result = query.all()
+        msg = {}
+        order = 0
+        for one in result:
+            order += 1
+            msg[f"{order}"] = {
+                "id": one.id,
+                "name": one.name,
+                "grade": one.grade,
+                "shopping": one.shopping_price
+            }
+        return msg
+
+    @with_db
+    def delete_item(self, item_id, db=None) -> bool:
+        """
+        删除物品
+        :param item_id: id
+        :param db: 默认
+        :return: bool
+        """
+        item = db.get(Item_Sheet, item_id)
+        if item:
+            db.delete(item)
+            return True
+        return False
 
 
 class Firm:
@@ -87,25 +153,19 @@ class Seed:
     """关于种子的"""
 
     @with_db
-    def create_plan_seed(self, *, plan_name: str, plan_grade: int, mature_time: int, mature_amount: int,
-                         comment: str | None = None, db=None) -> int:
+    def create_plan_seed(self, *, mature_time: int, mature_amount: int,
+                         db=None) -> int:
         """
         创建新种子
 
-        :param plan_name: 名称
-        :param plan_grade: 等级
         :param mature_time: 成熟时间
         :param mature_amount: 基础倍数
-        :param comment: 备注
         :param db: 默认接口
         :return: plan_seed.id
         """
         plan_seed = Plan_Seed(
-            plan_name=plan_name,
-            plan_grade=plan_grade,
             mature_time=mature_time,
-            mature_amount=mature_amount,
-            comment=comment
+            mature_amount=mature_amount
         )
 
         db.add(plan_seed)
@@ -125,11 +185,8 @@ class Seed:
             return None
 
         msg = {"id": plan.id,
-               "name": plan.plan_name,
-               "grade": plan.plan_grade,
                "mature_time": plan.mature_time,
-               "mature_amount": plan.mature_amount,
-               "comment": plan.comment}
+               "mature_amount": plan.mature_amount}
         return msg
 
     def seed_empty(self, plan_id) -> bool:
@@ -145,36 +202,17 @@ class Rewards:
     """关于收获物的"""
 
     @with_db
-    def create_plan_rewards(self, *, rewards_name: str, rewards_grade: int, db=None) -> int:
-        """
-        创建新的收获物
-
-
-        :param rewards_name: 名称
-        :param rewards_grade: 等级
-        :param db: 默认接口
-        :return: reward.id
-        """
-        reward = Plan_Seed_Rewards(
-            rewards_name=rewards_name,
-            rewards_grade=rewards_grade,
-        )
-        db.add(reward)
-        db.flush()
-        return reward.id
-
-    @with_db
-    def link_plan_rewards(self, *, plan_seed: int, rewards: int, db=None) -> bool:
+    def link_plan_rewards(self, *, plan_seed: int, item_id: int, db=None) -> bool:
         """
         关联种子和收获物
         :param plan_seed: plan_seed.id
-        :param rewards: rewards.id
+        :param item_id: rewards.id
         :param db: 默认接口
         :return: Ture
         """
         association = SeedRewardAssociation(
             seed_id=plan_seed,
-            reward_id=rewards,
+            item_id=item_id,
             rewards_amount=1,  # 需要指定掉落数量
             rewards_chance=1.0  # 需要指定掉落概率
         )
@@ -191,29 +229,14 @@ class Rewards:
         :return: Ture
         """
         # 查询种子关联的所有收获物
-        results = db.query(
-            Plan_Seed_Rewards,
-            SeedRewardAssociation.rewards_amount,
-            SeedRewardAssociation.rewards_chance
-        ).join(
-            SeedRewardAssociation,
-            Plan_Seed_Rewards.id == SeedRewardAssociation.reward_id
-        ).filter(
-            SeedRewardAssociation.seed_id == seed_id
-        ).all()
+        results = db.get(Plan_Seed, seed_id)
 
-        for reward, amount, chance in results:
+        for reward in results.rewards:
             # 1. 查找或创建Item记录
-            item = db.query(Item).filter(Item.name == reward.rewards_name).first()
+            item = db.query(Item_Sheet).filter(Item_Sheet.name == reward.item.name).first()
             if not item:
-                # 如果Item不存在，创建新的
-                item = Item(
-                    name=reward.rewards_name,
-                    grade=reward.rewards_grade,
-                    shopping_price=None  # 收获物默认不可出售，或者根据需求设置
-                )
-                db.add(item)
-                db.flush()  # 获取item.id
+                # 如果Item不存在，报错
+                return False
 
             # 2. 检查背包是否已有该物品
             backpack_item = db.query(Backpack).filter(
@@ -222,12 +245,12 @@ class Rewards:
 
             if backpack_item:
                 # 已有则增加数量
-                backpack_item.amount += amount
+                backpack_item.amount += reward.rewards_amount
             else:
                 # 没有则新增
                 backpack_item = Backpack(
                     name=item.name,  # 冗余字段，方便查询
-                    amount=amount,
+                    amount=reward.rewards_amount,
                     item_id=item.id
                 )
                 db.add(backpack_item)
