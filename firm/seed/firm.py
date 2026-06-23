@@ -3,7 +3,6 @@
     仅查询可以直接忽略db传入"""
 import random
 import time
-from typing import Optional
 
 from .data import Firm as Firm_Sheet, SeedRewardAssociation, Item as Item_Sheet
 from .data import Plan_Seed, with_db, Backpack
@@ -54,7 +53,7 @@ class Item:
             query = query.filter(Item_Sheet.grade == grade)
         if shopping_price:
             query = query.filter(Item_Sheet.shopping_price == shopping_price)
-        if not name and not grade and not shopping_price:
+        if not name and not grade and not shopping_price and not item_id:
             return []
         result = query.all()
         if len(result) >= 1:
@@ -124,7 +123,7 @@ class Firm:
         :return:
         """
         msg: list = []
-        land = db.query(Firm_Sheet).all
+        land = db.query(Firm_Sheet).all()
         if len(land) >= 1:
             for one in land:
                 msg.append({
@@ -291,14 +290,14 @@ class Back_bag(Item):
         :return:
         """
         msg = []
-        bag = db.query(Backpack).all
+        bag = db.query(Backpack).all()
         if len(bag) >= 1:
             for one in bag:
                 msg.append({
                     "id": one.id,
                     "name": one.item.name,
                     "amount": one.amount,
-                    "grate": one.item.grate
+                    "grade": one.item.grade
                 })
             return msg
         return None
@@ -329,7 +328,7 @@ class Back_bag(Item):
         :param db: 默认
         :return:
         """
-        if len(self.search_item(item_id=Optional[item_id])) == 1:
+        if len(self.search_item(item_id=item_id)) == 1:
 
             if bag_id := self.search_bag_item(item_id=item_id):
                 db.query(Backpack).filter(Backpack.id == bag_id).first().amount += amount
@@ -355,14 +354,14 @@ class Back_bag(Item):
         :return: bool
         """
         if bag_id := self.search_bag_item(item_id=item_id):
-            item = db.query(Backpack).filter(Backpack.id == bag_id).first().amount
-            if item > amount:
-                item -= amount
+            item = db.query(Backpack).filter(Backpack.id == bag_id).first()
+            if item.amount > amount:
+                item.amount -= amount
                 db.flush()
                 return True
-            if item == amount:
-                item -= amount
-                self.delete_item(item_id)
+            if item.amount == amount:
+                item.amount -= amount
+                db.delete(item)
                 db.flush()
                 return True
         return False
@@ -376,7 +375,9 @@ class Back_bag(Item):
         :return:
         """
         if self.search_bag_item(item_id=item_id):
-            db.query(Backpack).filter(Backpack.item_id == item_id).first().delete()
+            bag_item = db.query(Backpack).filter(Backpack.item_id == item_id).first()
+            db.delete(bag_item)
+            db.flush()
             return True
         return False
 
@@ -417,15 +418,14 @@ class Action(Firm, Seed, Rewards, Back_bag):
         return False, "未知错误"
 
     @with_db
-    def get_rewards(self, seed_id: int, db=None) -> tuple[bool, str]:
+    def get_rewards(self, seed_id: int) -> tuple[bool, str]:
         """
         将种子的获物品添加到背包
-        :param land_id:
-        :param db:
+        :param seed_id: id
         :return:
         """
         id_list = self.search_rewards(seed_id)
-        if not id_list:
+        if id_list:
             for item_id, amount, change in id_list:
                 if random.random() < change:
                     self.add_bag_item(item_id=item_id,
