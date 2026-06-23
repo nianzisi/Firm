@@ -33,7 +33,7 @@ class Item:
                     name=None | str,
                     grade=None | str,
                     shopping_price=None | str,
-                    db=None) -> list[dict, dict] | None:
+                    db=None) -> list[dict, dict]:
         """
         支持多段搜索(至少有一个)
         :param item_id: id
@@ -56,7 +56,7 @@ class Item:
         if not name and not grade and not shopping_price and not item_id:
             return []
         result = query.all()
-        if len(result) >= 1:
+        if result:
             for one in result:
                 msg.append({
                     "id": one.id,
@@ -65,7 +65,7 @@ class Item:
                     "shopping": one.shopping_price
                 })
             return msg
-        return None
+        return []
 
     @with_db
     def delete_item(self, item_id, db=None) -> bool:
@@ -99,7 +99,7 @@ class Firm:
         return land.id
 
     @with_db
-    def land(self, firm_id: int, db=None) -> dict | None:
+    def land(self, firm_id: int, db=None) -> dict:
         """
         查询土地
         :param firm_id: 土地id
@@ -108,7 +108,7 @@ class Firm:
         """
         land = db.get(Firm_Sheet, firm_id)
         if land is None:
-            raise LandNotFoundError(f"土地{firm_id}不存在")
+            return {}
         msg = {"land.id": land.id,
                "land.level": land.level,
                "land.plan_time": land.plan_time,
@@ -117,14 +117,14 @@ class Firm:
         return msg
 
     @with_db
-    def search_land(self, db=None) -> list[dict, dict] | None:
+    def search_land(self, db=None) -> list[dict, dict]:
         """
         返回全部土地信息
         :return:
         """
         msg: list = []
         land = db.query(Firm_Sheet).all()
-        if len(land) >= 1:
+        if land:
             for one in land:
                 msg.append({
                     "id": one.id,
@@ -134,7 +134,7 @@ class Firm:
                     "plan_id": one.plan_id
                 })
             return msg
-        return None
+        return []
 
     def land_free(self, firm_id: int) -> bool:
         """
@@ -210,7 +210,7 @@ class Seed:
         return plan_seed.id
 
     @with_db
-    def seed(self, plan_id, db=None) -> dict | None:
+    def seed(self, plan_id, db=None) -> dict:
         """
         查询种子
         :param plan_id: id
@@ -219,7 +219,7 @@ class Seed:
         """
         plan = db.get(Plan_Seed, plan_id)
         if plan is None:
-            return None
+            return {}
 
         msg = {"id": plan.id,
                "mature_time": plan.mature_time,
@@ -232,7 +232,7 @@ class Seed:
         :param plan_id:id
         :return: 空False，非空Ture
         """
-        return self.seed(plan_id) is not None
+        return bool(self.seed(plan_id))
 
 
 class Rewards:
@@ -262,12 +262,12 @@ class Rewards:
         return True
 
     @with_db
-    def search_rewards(self, seed_id, db=None) -> None | list:
+    def search_rewards(self, seed_id, db=None) -> list:
         """
         检索收获物是否存在
         :param seed_id: 种子id
         :param db: 默认
-        :return: None | list[list,list,list]
+        :return: list[list,list,list]
         """
         id_list = []
         results = db.query(Plan_Seed).filter(Plan_Seed.id == seed_id).first()
@@ -275,7 +275,7 @@ class Rewards:
             item = db.query(Item_Sheet).filter(Item_Sheet.name == one.item.name).first()
             if not item:
                 # 如果Item不存在，报错
-                return None
+                return []
             id_list.append([item.id, one.rewards_amount, one.rewards_chance])
         return id_list
 
@@ -284,14 +284,14 @@ class Back_bag(Item):
     """背包相关动作"""
 
     @with_db
-    def search_bag(self, db=None) -> list[dict, dict] | None:
+    def search_bag(self, db=None) -> list[dict, dict]:
         """
         查询背包
         :return:
         """
         msg = []
         bag = db.query(Backpack).all()
-        if len(bag) >= 1:
+        if bag:
             for one in bag:
                 msg.append({
                     "id": one.id,
@@ -300,7 +300,7 @@ class Back_bag(Item):
                     "grade": one.item.grade
                 })
             return msg
-        return None
+        return []
 
     @with_db
     def search_bag_item(self, *, item_id: int | None = None, name: int | None = None, db=None) -> bool:
