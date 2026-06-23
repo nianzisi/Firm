@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, Form, Query
 from starlette.responses import RedirectResponse
 
-from web.app import templates
+from web.commond import templates
 
 from seed.firm import Action
 
@@ -27,6 +27,11 @@ async def search_land(land_id: int = Query(...)):
     return msg
 
 
+@router.get("/search_land_all")
+async def search_land_all():
+    return action.search_land()
+
+
 @router.post("/clear_land")
 async def clear_land(land_id: int = Form(...)):
     return action.clear_land(land_id)
@@ -40,11 +45,13 @@ async def plan_seed(seed_id: int = Form(...),
 
 @router.post("/get_rewards")
 async def get_rewards(land_id: int = Form(...)):
-    if result := action.reward(land_id=land_id):
+    ok, msg = action.reward(land_id=land_id)
+    if ok:
         seed_id = action.land(land_id).get("land.plan_id")
-        return action.get_rewards(seed_id)
+        msg2 = action.get_rewards(seed_id)
+        return msg2[0], msg2[1]
     else:
-        return False, result[1]
+        return False, msg[1]
 
 
 @router.get("/back_bag")

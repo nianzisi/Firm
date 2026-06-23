@@ -1,10 +1,228 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>农场 - Firm</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, 'Segoe UI', sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e0;
+            padding: 32px 24px;
+        }
+        h1 { font-size: 20px; color: #fff; margin-bottom: 24px; }
+        h1 small { font-size: 13px; color: #888; font-weight: 400; margin-left: 8px; }
+        .layout { display: flex; gap: 16px; align-items: flex-start; max-width: 1200px; }
+        .layout-left { flex: 1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; min-width: 0; }
+        .layout-right { width: 340px; flex-shrink: 0; }
+        @media (max-width: 900px) {
+            .layout { flex-direction: column; }
+            .layout-left { grid-template-columns: 1fr; }
+            .layout-right { width: 100%; }
+        }
+        .card {
+            background: #1a1a2e;
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid #2a2a44;
+        }
+        .card h2 {
+            font-size: 14px;
+            color: #a0a0c0;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #2a2a44;
+        }
+        .field { margin-bottom: 10px; }
+        .field label {
+            display: block;
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 3px;
+        }
+        .field input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #2a2a44;
+            border-radius: 6px;
+            background: #0f0f1a;
+            color: #e0e0e0;
+            font-size: 13px;
+            outline: none;
+        }
+        .field input:focus { border-color: #4a6cf7; }
+        .btn {
+            padding: 8px 0;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            background: #4a6cf7;
+            color: #fff;
+            margin-top: 4px;
+        }
+        .btn-full { width: 100%; }
+        .btn:hover { background: #3b5de7; }
+        .btn-green { background: #2d8a4e; }
+        .btn-green:hover { background: #257a42; }
+        .btn-red { background: #a33; }
+        .btn-red:hover { background: #822; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { padding: 6px 8px; text-align: left; border-bottom: 1px solid #2a2a44; color: #888; font-size: 12px; }
+        td { padding: 6px 8px; border-bottom: 1px solid #1a1a2e; }
+        .badge {
+            display: inline-block; padding: 2px 10px; border-radius: 10px;
+            font-size: 11px; font-weight: 600;
+        }
+        .badge-green { background: #1a4a2e; color: #5cb85c; }
+        .badge-blue { background: #1a2a4a; color: #5b9bd5; }
+        .badge-gray { background: #2a2a2a; color: #888; }
+    </style>
 </head>
 <body>
+    <h1>🌾 农场 <small>种植 · 收获 · 背包</small></h1>
 
+    <div class="layout">
+        <div class="layout-left">
+            <div class="card">
+                <h2>🌱 创建土地</h2>
+                <form onsubmit="createLand(event)">
+                    <button class="btn btn-green btn-full" type="submit">+ 新建土地</button>
+                </form>
+            </div>
+            <div class="card">
+                <h2>🌰 种植</h2>
+                <form onsubmit="plantSeed(event)">
+                    <div class="field"><label>土地 ID</label><input name="land_id" type="number" required></div>
+                    <div class="field"><label>种子 ID</label><input name="seed_id" type="number" required></div>
+                    <button class="btn btn-full" type="submit">种植</button>
+                </form>
+            </div>
+            <div class="card" style="grid-column: 1 / -1;">
+                <h2>📋 全部土地</h2>
+                <table>
+                    <thead><tr><th>ID</th><th>等级</th><th>状态</th><th>倍率</th><th>操作</th></tr></thead>
+                    <tbody id="landBody">
+                        <tr><td colspan="5" style="text-align:center;color:#555;padding:20px;">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="layout-right">
+            <div class="card">
+                <h2>🎒 背包</h2>
+                <table>
+                    <thead><tr><th>物品</th><th>数量</th><th>品阶</th></tr></thead>
+                    <tbody id="backpackBody">
+                        <tr><td colspan="3" style="text-align:center;color:#555;padding:20px;">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const now = () => Math.floor(Date.now() / 1000);
+
+        // ──── 创建土地 ────
+        async function createLand(e) {
+            e.preventDefault();
+            const resp = await fetch("/firm/creat_land", { method: "POST" });
+            if (resp.ok) { alert("土地创建成功"); loadLands(); }
+            else alert("创建失败");
+        }
+
+        // ──── 全部土地 ────
+        async function loadLands() {
+            const tbody = document.getElementById("landBody");
+            try {
+                const resp = await fetch("/firm/search_land_all");
+                const data = await resp.json();
+                tbody.innerHTML = "";
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#666;padding:20px;">暂无土地</td></tr>';
+                    return;
+                }
+                for (const land of data) {
+                    let status, badge, actionBtn;
+                    if (!land.plan_id) {
+                        status = "空闲"; badge = "badge-gray";
+                        actionBtn = `<button class="btn" style="width:auto;padding:2px 12px;font-size:11px;" onclick="plantOn(${land.id})">种植</button>`;
+                    } else if (land.plan_time <= now()) {
+                        status = "可收获"; badge = "badge-green";
+                        actionBtn = `<button class="btn" style="width:auto;padding:2px 12px;font-size:11px;background:#2d8a4e;" onclick="harvestLand(${land.id})">收获</button>`;
+                    } else {
+                        status = "生长中"; badge = "badge-blue";
+                        actionBtn = `<span style="color:#888;font-size:12px;">${land.plan_time - now()}s</span>`;
+                    }
+                    tbody.innerHTML += `<tr>
+                        <td>${land.id}</td>
+                        <td>Lv.${land.level}</td>
+                        <td><span class="badge ${badge}">${status}</span></td>
+                        <td>${land.extra_amount}</td>
+                        <td>${actionBtn}</td>
+                    </tr>`;
+                }
+            } catch (_) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#c44;padding:20px;">加载失败</td></tr>';
+            }
+        }
+
+        // ──── 种植（土地表格按钮） ────
+        function plantOn(landId) {
+            const seedId = prompt(`在土地 #${landId} 种植，输入种子 ID：`);
+            if (!seedId) return;
+            const fd = new FormData();
+            fd.append("land_id", landId);
+            fd.append("seed_id", seedId);
+            fetch("/firm/plan_seed", { method: "POST", body: fd })
+                .then(r => { if (r.ok) { alert("种植成功"); loadLands(); loadBackpack(); } });
+        }
+
+        // ──── 种植（表单） ────
+        async function plantSeed(e) {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            const resp = await fetch("/firm/plan_seed", { method: "POST", body: fd });
+            if (resp.ok) { alert("种植成功"); loadLands(); loadBackpack(); }
+            else alert("种植失败");
+        }
+
+        // ──── 收获 ────
+        async function harvestLand(landId) {
+            const fd = new FormData();
+            fd.append("land_id", landId);
+            const resp = await fetch("/firm/get_rewards", { method: "POST", body: fd });
+            if (resp.ok) { alert("收获完成"); loadLands(); loadBackpack(); }
+            else alert("收获失败");
+        }
+
+        // ──── 背包 ────
+        async function loadBackpack() {
+            const tbody = document.getElementById("backpackBody");
+            try {
+                const resp = await fetch("/firm/back_bag");
+                const data = await resp.json();
+                tbody.innerHTML = "";
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#666;padding:20px;">背包为空</td></tr>';
+                    return;
+                }
+                for (const item of data) {
+                    tbody.innerHTML += `<tr><td>${item.name}</td><td>${item.amount}</td><td>${item.grade}</td></tr>`;
+                }
+            } catch (_) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#c44;padding:20px;">加载失败</td></tr>';
+            }
+        }
+
+        // 页面加载后自动刷新
+        loadLands();
+        loadBackpack();
+    </script>
 </body>
 </html>

@@ -29,10 +29,10 @@ class Item:
     @with_db
     def search_item(self,
                     *,
-                    item_id=None | int,
-                    name=None | str,
-                    grade=None | str,
-                    shopping_price=None | str,
+                    item_id: None | int = None,
+                    name: None | str = None,
+                    grade: None | int = None,
+                    shopping_price: None | int = None,
                     db=None) -> list[dict, dict]:
         """
         支持多段搜索(至少有一个)
@@ -161,7 +161,7 @@ class Firm:
         land = db.get(Firm_Sheet, firm_id)
         if seed and land:
             land.plan_id = seed.id
-            from founction import maturity_time
+            from seed.founction import maturity_time
             land.plan_time = maturity_time(land_id=land.id, seed_id=seed.id)
             return True
         return False
@@ -422,18 +422,22 @@ class Action(Firm, Seed, Rewards, Back_bag):
         return False, "未知错误"
 
     @with_db
-    def get_rewards(self, seed_id: int) -> tuple[bool, str]:
+    def get_rewards(self, seed_id: int, db=None) -> tuple[bool, str]:
         """
         将种子的获物品添加到背包
         :param seed_id: id
+        :param db:
         :return:
         """
-        id_list = self.search_rewards(seed_id)
+        id_list = self.search_rewards(seed_id, db=db)
         if id_list:
             for item_id, amount, change in id_list:
                 if random.random() < change:
-                    self.add_bag_item(item_id=item_id,
-                                      amount=amount)
+                    msg = self.add_bag_item(item_id=item_id,
+                                            amount=amount,
+                                            db=db)
+                    if not msg:
+                        return False, "添加物品失败"
             return True, "添加成功"
         return False, "该物品不存在"
 

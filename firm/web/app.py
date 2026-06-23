@@ -4,16 +4,14 @@ from typing import Optional
 import uvicorn
 from fastapi import FastAPI, Form, Query, Request
 from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
-import pathlib
+
 
 from seed.firm import Action
-from play import router
+from web.play import router
+from web.commond import templates
 
 app = FastAPI(title="Firm")
-templates = Jinja2Templates(
-    directory=str(pathlib.Path(__file__).resolve().parent / "templates")
-)
+
 
 app.include_router(router)
 

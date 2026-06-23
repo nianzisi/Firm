@@ -15,6 +15,7 @@ class Data(Firm, Seed):
             self.seed_msg = self.seed(self.seed_id)
         if self.land_msg is None:
             self.land_msg = self.land(self.land_id)
+        return self
 
     @property
     def land_level(self) -> int:
