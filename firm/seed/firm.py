@@ -1,7 +1,9 @@
 """土地种植规则
     涉及到提交的，由调用端统一传入db
     仅查询可以直接忽略db传入"""
+import random
 import time
+from typing import Optional
 
 from .data import Firm as Firm_Sheet, SeedRewardAssociation, Item as Item_Sheet
 from .data import Plan_Seed, with_db, Backpack
@@ -28,12 +30,14 @@ class Item:
     @with_db
     def search_item(self,
                     *,
+                    item_id=None | int,
                     name=None | str,
                     grade=None | str,
                     shopping_price=None | str,
-                    db=None) -> list[dict, dict]:
+                    db=None) -> list[dict, dict] | None:
         """
         支持多段搜索(至少有一个)
+        :param item_id: id
         :param name: 名称
         :param grade: 等级
         :param shopping_price: 价格
@@ -42,6 +46,8 @@ class Item:
         """
         msg: list = []
         query = db.query(Item_Sheet)
+        if item_id:
+            query = query.filter(Item_Sheet.id == item_id)
         if name:
             query = query.filter(Item_Sheet.name.contains(name))
         if grade:
@@ -51,14 +57,16 @@ class Item:
         if not name and not grade and not shopping_price:
             return []
         result = query.all()
-        for one in result:
-            msg.append({
-                "id": one.id,
-                "name": one.name,
-                "grade": one.grade,
-                "shopping": one.shopping_price
-            })
-        return msg
+        if len(result) >= 1:
+            for one in result:
+                msg.append({
+                    "id": one.id,
+                    "name": one.name,
+                    "grade": one.grade,
+                    "shopping": one.shopping_price
+                })
+            return msg
+        return None
 
     @with_db
     def delete_item(self, item_id, db=None) -> bool:
@@ -108,6 +116,26 @@ class Firm:
                "land.plan_id": land.plan_id,
                "land.extra_amount": land.extra_amount}
         return msg
+
+    @with_db
+    def search_land(self, db=None) -> list[dict, dict] | None:
+        """
+        返回全部土地信息
+        :return:
+        """
+        msg: list = []
+        land = db.query(Firm_Sheet).all
+        if len(land) >= 1:
+            for one in land:
+                msg.append({
+                    "id": one.id,
+                    "level": one.level,
+                    "plan_time": one.plan_time,
+                    "extra_amount": one.extra_amount,
+                    "plan_id": one.plan_id
+                })
+            return msg
+        return None
 
     def land_free(self, firm_id: int) -> bool:
         """
@@ -235,43 +263,125 @@ class Rewards:
         return True
 
     @with_db
-    def add_to_backpack(self, seed_id, db=None) -> bool:
+    def search_rewards(self, seed_id, db=None) -> None | list:
         """
-        收获
-        :param seed_id: id
+        检索收获物是否存在
+        :param seed_id: 种子id
         :param db: 默认
-        :return: Ture
+        :return: None | list[list,list,list]
         """
-        # 查询种子关联的所有收获物
-        results = db.get(Plan_Seed, seed_id)
-
-        for reward in results.rewards:
-            # 1. 查找或创建Item记录
-            item = db.query(Item_Sheet).filter(Item_Sheet.name == reward.item.name).first()
+        id_list = []
+        results = db.query(Plan_Seed).filter(Plan_Seed.id == seed_id).first()
+        for one in results.rewards:
+            item = db.query(Item_Sheet).filter(Item_Sheet.name == one.item.name).first()
             if not item:
                 # 如果Item不存在，报错
-                return False
+                return None
+            id_list.append([item.id, one.rewards_amount, one.rewards_chance])
+        return id_list
 
-            # 2. 检查背包是否已有该物品
-            backpack_item = db.query(Backpack).filter(
-                Backpack.item_id == item.id
-            ).first()
 
-            if backpack_item:
-                # 已有则增加数量
-                backpack_item.amount += reward.rewards_amount
+class Back_bag(Item):
+    """背包相关动作"""
+
+    @with_db
+    def search_bag(self, db=None) -> list[dict, dict] | None:
+        """
+        查询背包
+        :return:
+        """
+        msg = []
+        bag = db.query(Backpack).all
+        if len(bag) >= 1:
+            for one in bag:
+                msg.append({
+                    "id": one.id,
+                    "name": one.item.name,
+                    "amount": one.amount,
+                    "grate": one.item.grate
+                })
+            return msg
+        return None
+
+    @with_db
+    def search_bag_item(self, *, item_id: int | None = None, name: int | None = None, db=None) -> bool:
+        """
+        查询背包是否有id物品
+        :param item_id:id
+        :param name:名称
+        :param db: 默认
+        :return: Ture(id) False
+        """
+        if item_id:
+            if item := db.query(Backpack).filter(Backpack.item_id == item_id).first():
+                return item.id
+        if name:
+            if item := db.query(Backpack).filter(Backpack.name == name).first():
+                return item.id
+        return False
+
+    @with_db
+    def add_bag_item(self, *, item_id: int, amount: int, db=None) -> bool:
+        """
+        添加物品
+        :param item_id: item.id
+        :param amount: 数量
+        :param db: 默认
+        :return:
+        """
+        if len(self.search_item(item_id=Optional[item_id])) == 1:
+
+            if bag_id := self.search_bag_item(item_id=item_id):
+                db.query(Backpack).filter(Backpack.id == bag_id).first().amount += amount
+                db.flush()
+                return True
             else:
-                # 没有则新增
-                backpack_item = Backpack(
-                    name=item.name,  # 冗余字段，方便查询
-                    amount=reward.rewards_amount,
-                    item_id=item.id
+                item = Backpack(
+                    amount=amount,
+                    item_id=item_id
                 )
-                db.add(backpack_item)
-        return True
+                db.add(item)
+                db.flush()
+                return True
+        return False
+
+    @with_db
+    def subtract_bag_item(self, *, item_id: int, amount: int, db=None) -> bool:
+        """
+        减少物品数量
+        :param item_id: id
+        :param amount: 数量
+        :param db: 默认
+        :return: bool
+        """
+        if bag_id := self.search_bag_item(item_id=item_id):
+            item = db.query(Backpack).filter(Backpack.id == bag_id).first().amount
+            if item > amount:
+                item -= amount
+                db.flush()
+                return True
+            if item == amount:
+                item -= amount
+                self.delete_item(item_id)
+                db.flush()
+                return True
+        return False
+
+    @with_db
+    def remove_bag_item(self, *, item_id: int, db=None) -> bool:
+        """
+        删除物品
+        :param item_id:item.id
+        :param db: 默认
+        :return:
+        """
+        if self.search_bag_item(item_id=item_id):
+            db.query(Backpack).filter(Backpack.item_id == item_id).first().delete()
+            return True
+        return False
 
 
-class Action(Firm, Seed, Rewards, Item):
+class Action(Firm, Seed, Rewards, Back_bag):
     """逻辑动作：
     种植，收获，添加收获物"""
 
@@ -291,10 +401,9 @@ class Action(Firm, Seed, Rewards, Item):
         self.plan_seed(firm_id=firm_id, seed_id=plan_id, db=db)
         return True, f"{firm_id}种植{plan_id}成功"
 
-    def reward(self, land_id: int, *, db) -> tuple[bool, str]:
+    def reward(self, land_id: int) -> tuple[bool, str]:
         """
-        完整的收获动作
-        :param db: 默认
+        收获动作判断
         :param land_id:id
         :return:[bool,详细信息]
         """
@@ -304,25 +413,25 @@ class Action(Firm, Seed, Rewards, Item):
         if self.land(land_id).get("land.plan_time") is None:
             return False, "时间错误"
         if self.land(land_id).get("land.plan_time") < time.time():
-            self.clear_land(land_id, db=db)
-            return True, f"{land_id}已收获"
+            return True, f"{land_id}可收获"
         return False, "未知错误"
 
     @with_db
-    def get_rewards(self, land_id: int, db=None) -> tuple[bool, str]:
+    def get_rewards(self, seed_id: int, db=None) -> tuple[bool, str]:
         """
-        收获物品并添加到背包
+        将种子的获物品添加到背包
         :param land_id:
         :param db:
         :return:
         """
-        seed_id = self.land(land_id).get("land.plan_id")
-        status = self.reward(land_id, db=db)
-        if status[0]:
-            self.add_to_backpack(seed_id, db=db)
-            return True, f"收获{land_id}成功"
-        else:
-            return False, status[1]
+        id_list = self.search_rewards(seed_id)
+        if not id_list:
+            for item_id, amount, change in id_list:
+                if random.random() < change:
+                    self.add_bag_item(item_id=item_id,
+                                      amount=amount)
+            return True, "添加成功"
+        return False, "该物品不存在"
 
 
 if __name__ == "__main__":

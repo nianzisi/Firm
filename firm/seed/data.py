@@ -169,11 +169,15 @@ class Firm(Base):
 # 5. 背包表
 # ============================================
 class Backpack(Base):
-    """背包"""
+    """
+    背包
+    id: id
+    amount: 数量
+    item_id: item_id
+    """
     __tablename__ = "backpack"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(20), nullable=False)
     amount: Mapped[int] = mapped_column(nullable=False, default=0)
 
     item_id: Mapped[int] = mapped_column(ForeignKey("item.id"), nullable=False)
