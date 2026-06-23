@@ -364,6 +364,10 @@ class Back_bag(Item):
                 db.delete(item)
                 db.flush()
                 return True
+            if item.amount < amount:
+                item.amount = 0
+                db.flush()
+                return True
         return False
 
     @with_db

@@ -27,17 +27,32 @@ async def search_land(land_id: int = Query(...)):
     return msg
 
 
+@router.post("/clear_land")
+async def clear_land(land_id: int = Form(...)):
+    return action.clear_land(land_id)
+
+
 @router.post("/plan_seed")
 async def plan_seed(seed_id: int = Form(...),
                     land_id: int = Form(...)):
     return action.plan_seed(firm_id=land_id, seed_id=seed_id)
 
 
-@router.post("/clear_land")
-async def clear_land(land_id: int = Form(...)):
-    return action.clear_land(land_id)
-
-
 @router.post("/get_rewards")
 async def get_rewards(land_id: int = Form(...)):
-    return action.get_rewards(land_id)
+    if result := action.reward(land_id=land_id):
+        seed_id = action.land(land_id).get("land.plan_id")
+        return action.get_rewards(seed_id)
+    else:
+        return False, result[1]
+
+
+@router.get("/back_bag")
+async def back_bag():
+    return action.search_bag()
+
+
+@router.post("/throw_away")
+async def throw_away(item_id: int = Form(...),
+                     amount: int = Form(...)):
+    return action.subtract_bag_item(item_id=item_id, amount=amount)
