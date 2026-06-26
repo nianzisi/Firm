@@ -49,6 +49,7 @@ async def get_rewards(land_id: int = Form(...)):
     if ok:
         seed_id = action.land(land_id).get("land.plan_id")
         msg2 = action.get_rewards(seed_id)
+        action.clear_land(land_id)
         return msg2[0], msg2[1]
     else:
         return False, msg[1]

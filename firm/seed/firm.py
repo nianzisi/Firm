@@ -179,6 +179,8 @@ class Firm:
             if land.plan_id:
                 land.plan_id = None
                 return True
+            if land.plan_time:
+                land.plan_time = -1
         return False
 
 
@@ -301,6 +303,21 @@ class Back_bag(Item):
                 })
             return msg
         return []
+
+    @with_db
+    def search_bag_seed(self, db=None):
+        msg = []
+        results = db.query(Backpack, Item_Sheet, Plan_Seed).join(
+            Item, Backpack.item_id == Item_Sheet.id
+        ).join(
+            Plan_Seed, Item_Sheet.id == Plan_Seed.item_id
+        ).all()
+        for bag, item, seed in results:
+            msg.append({
+                "name": item.name,
+                "id": seed.id
+            })
+        return msg
 
     @with_db
     def search_bag_item(self, *, item_id: int | None = None, name: int | None = None, db=None) -> bool:
