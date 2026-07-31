@@ -9,7 +9,7 @@ from datetime import datetime
 
 from commomd.mind import Base, DATABASE_URL
 
-
+from EventBus import event_on,event_emit,logger_emit
 class Player(Base):
     """
 
@@ -34,7 +34,8 @@ class Player(Base):
             return min(100, value)
         return max(0, min(255, value))
 
-    @event.listens_for(Player,"after_insert")
+    @event_on
+    def
     # 实例级别事件
     # @event.listens_for(Player, 'before_insert')  # 插入前
     # @event.listens_for(Player, 'after_insert')  # 插入后

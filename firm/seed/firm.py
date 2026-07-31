@@ -343,7 +343,7 @@ class Back_bag(Item):
         :param item_id: item.id
         :param amount: 数量
         :param db: 默认
-        :return:
+        :return: Ture:添加成功
         """
         if len(self.search_item(item_id=item_id)) == 1:
 
@@ -412,9 +412,9 @@ class Action(Firm, Seed, Rewards, Back_bag):
         """
         完整的种植动作
         :param db: 默认
-        :param plan_id:seed_id
+        :param plan_id: seed_id
         :param firm_id: land_id
-        :return:
+        :return: [bool,详细信息]
         """
         if not self.land_free(firm_id):
             return False, "土地不存在|土地已种植"
@@ -426,27 +426,28 @@ class Action(Firm, Seed, Rewards, Back_bag):
     def reward(self, land_id: int) -> tuple[bool, str]:
         """
         收获动作判断
-        :param land_id:id
-        :return:[bool,详细信息]
+        :param land_id: id
+        :return: bool,详细信息]
         """
 
-        if self.land_free(land_id) is True:
+        if self.land_free(land_id):
             return False, "土地空闲"
         if self.land(land_id).get("land.plan_time") is None:
             return False, "时间错误"
         if self.land(land_id).get("land.plan_time") < time.time():
             return True, f"{land_id}可收获"
-        return False, "未知错误"
+        return False, f"{land_id}未成熟"
 
     @with_db
     def get_rewards(self, seed_id: int, db=None) -> tuple[bool, str]:
         """
         将种子的获物品添加到背包
         :param seed_id: id
-        :param db:
-        :return:
+        :param db: 默认
+        :return: [bool,详细信息]
         """
         id_list = self.search_rewards(seed_id, db=db)
+        mes: list = []
         if id_list:
             for item_id, amount, change in id_list:
                 if random.random() < change:
@@ -454,7 +455,10 @@ class Action(Firm, Seed, Rewards, Back_bag):
                                             amount=amount,
                                             db=db)
                     if not msg:
-                        return False, "添加物品失败"
+                        mes.append(f"物品{item_id}添加失败")
+                        continue
+            if mes:
+                return False, "".join(mes)
             return True, "添加成功"
         return False, "该物品不存在"
 
