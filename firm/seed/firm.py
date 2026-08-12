@@ -5,7 +5,9 @@ import random
 import time
 
 from .data import Firm as Firm_Sheet, SeedRewardAssociation, Item as Item_Sheet
-from .data import Plan_Seed, with_db, Backpack
+from .data import Plan_Seed, Backpack
+
+from commomd.mind import with_db
 
 from .error import *
 
@@ -345,7 +347,7 @@ class Back_bag(Item):
         :param db: 默认
         :return: Ture:添加成功
         """
-        if len(self.search_item(item_id=item_id)) == 1:
+        if self.search_item(item_id=item_id):
 
             if bag_id := self.search_bag_item(item_id=item_id):
                 db.query(Backpack).filter(Backpack.id == bag_id).first().amount += amount

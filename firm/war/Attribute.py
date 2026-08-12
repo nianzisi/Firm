@@ -9,7 +9,9 @@ from datetime import datetime
 
 from commomd.mind import Base, DATABASE_URL
 
-from EventBus import event_on,event_emit,logger_emit
+from EventBus import event_on, event_emit, logger_emit
+
+
 class Player(Base):
     """
 
@@ -25,6 +27,7 @@ class Player(Base):
     MingJie: Mapped[int] = mapped_column(LargeBinary(255), nullable=False)
     WuXing: Mapped[int] = mapped_column(LargeBinary(255), nullable=False)
 
+    # 玩家独有的属性
     level: Mapped[int] = mapped_column(LargeBinary(255), nullable=False)
     CurrentEXP: Mapped[int] = mapped_column(LargeBinary(255), nullable=False)
 
@@ -34,8 +37,6 @@ class Player(Base):
             return min(100, value)
         return max(0, min(255, value))
 
-    @event_on
-    def
     # 实例级别事件
     # @event.listens_for(Player, 'before_insert')  # 插入前
     # @event.listens_for(Player, 'after_insert')  # 插入后
@@ -50,3 +51,36 @@ class Player(Base):
     # @event.listens_for(Session, 'after_commit')  # 提交后
     # @event.listens_for(Session, 'before_flush')  # 刷新前
     # @event.listens_for(Session, 'after_flush')  # 刷新后
+
+
+class Enemy(Base):
+    """
+    怪物表
+    """
+    __tablename__ = "enemy"
+
+    id: Mapped[int] = mapped_column(primary_key=True, nullable=False)  # 主键
+    name: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
+
+    # 属性
+    GenGu: Mapped[int] = mapped_column(LargeBinary(255), nullable=False)
+    BiLi: Mapped[int] = mapped_column(LargeBinary(255), nullable=False)
+    MingJie: Mapped[int] = mapped_column(LargeBinary(255), nullable=False)
+    WuXing: Mapped[int] = mapped_column(LargeBinary(255), nullable=False)
+
+    enemy_item = relationship("enemy_item", back_populates="enemy")
+
+
+class Enemy_item(Base):
+    """
+    怪物掉落
+    """
+
+    __tablename__ = "enemy_item"
+
+    item_id: Mapped[int] = mapped_column(ForeignKey("item.id"))
+    enemy_id: Mapped[int] = mapped_column(ForeignKey("enemy.id"))
+    count: Mapped[int] = mapped_column(LargeBinary(255), nullable=False)
+
+    enemy = relationship("enemy", back_populates="enemy_item")
+    item = relationship("item", back_populates="enemy_item")

@@ -40,9 +40,10 @@ def event_on(category: str):
     return event
 
 
-def event_emit(category: str):
+def event_emit(*, category: str, result_name: str, **data):
     """
-    事件监听器的执行函数
+    事件监听器的执行函数，接受任意赋值
+    :param result_name: 结果名称
     :param category: 类型名称
     :return: func(*arges, **kwargs)
     """
@@ -50,6 +51,8 @@ def event_emit(category: str):
     def event(func):
         def wrapper(*args, **kwargs):
             result = func(*args, **kwargs)
+            kwargs[result_name] = result
+            kwargs = kwargs | data
             EventBus().emit(category=category, *args, **kwargs)
             return result
 
