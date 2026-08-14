@@ -1,15 +1,7 @@
-from functools import wraps
-from typing import Optional, List
+from sqlalchemy import Integer, String, LargeBinary, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
-from sqlalchemy import create_engine, Column, Integer, String, LargeBinary, DateTime, ForeignKey, Computed, \
-    UniqueConstraint, event
-from sqlalchemy.orm import declarative_base, sessionmaker, Mapped, mapped_column, relationship, validates
-
-from datetime import datetime
-
-from commomd.mind import Base, DATABASE_URL
-
-from EventBus import event_on, event_emit, logger_emit
+from commomd.mind import Base
 
 
 class Player(Base):
@@ -78,9 +70,13 @@ class Enemy_item(Base):
 
     __tablename__ = "enemy_item"
 
+    id: Mapped[int] = mapped_column(primary_key=True, nullable=False)  # 主键
     item_id: Mapped[int] = mapped_column(ForeignKey("item.id"))
     enemy_id: Mapped[int] = mapped_column(ForeignKey("enemy.id"))
     count: Mapped[int] = mapped_column(LargeBinary(255), nullable=False)
 
     enemy = relationship("enemy", back_populates="enemy_item")
     item = relationship("item", back_populates="enemy_item")
+
+
+print("war/Attribute.py 中的 Base 地址:", id(Base))

@@ -308,10 +308,11 @@ if __name__ == "__main__":
 
     msg = Battle([player, enemy, enemy2]).battle_run()
     msg2 =Control.data_handle(msg)
+    msg3 = Control.out_handle(msg2)
 
-    for i in msg2:
+    for i in msg3:
         print(i)
         print(type(i))
     print(player.HP, enemy.HP, enemy2.HP)
 
-    print(type(msg2))
+    print(int(0) == 0)

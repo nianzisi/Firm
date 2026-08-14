@@ -159,8 +159,10 @@ class Backpack(Base):
     item: Mapped["Item"] = relationship(back_populates="backpack_items")
 
 
+print("war/data.py 中的 Base 地址:", id(Base))
+
 if __name__ == "__main__":
-    pass
+    print("war/Attribute.py 中的 Base 地址:", id(Base))
     # 创建表
 
     # Base.metadata.drop_all(engine)  # 删除所有表（危险！会清空数据）

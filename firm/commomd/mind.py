@@ -37,3 +37,6 @@ def with_db(func):
             db.close()  # 确保关闭
 
     return wrapper
+
+
+print("war/mind.py 中的 Base 地址:", id(Base))
