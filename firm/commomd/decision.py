@@ -33,11 +33,3 @@ def base_decision(_even, *args):
         return True
     return False
 
-
-class A:
-    A=1
-
-class B:
-    A = 1
-
-print(data_decision([A(),B()]))

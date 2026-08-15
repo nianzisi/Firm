@@ -10,8 +10,8 @@ class Control:
     """
     控制战斗和结算逻辑
     """
-    orm_dict = {"怪物": Enemy,
-                "enemy": Enemy}
+
+    orm_dict = {"怪物": Enemy, "enemy": Enemy}
     #  后续可以新建 boos 表，也可以放入orm_dict
 
     @staticmethod
@@ -33,10 +33,14 @@ class Control:
         out_msg = []
         for _msg in logger:
             if float(_msg.get("受伤者剩余血量")) == 0:
-                out_msg.append({"攻击者tab_name": _msg["攻击者tab_name"],
-                                "攻击者id": _msg["攻击者id"],
-                                "受伤者tab_name": _msg["受伤者tab_name"],
-                                "受伤者id": _msg["受伤者id"]})
+                out_msg.append(
+                    {
+                        "攻击者tab_name": _msg["攻击者tab_name"],
+                        "攻击者id": _msg["攻击者id"],
+                        "受伤者tab_name": _msg["受伤者tab_name"],
+                        "受伤者id": _msg["受伤者id"],
+                    }
+                )
         return out_msg
 
     @staticmethod

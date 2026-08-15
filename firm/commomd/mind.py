@@ -1,10 +1,26 @@
 """数据"""
+
 from functools import wraps
 from typing import Optional, List
 
-from sqlalchemy import create_engine, Column, Integer, String, LargeBinary, DateTime, ForeignKey, Computed, \
-    UniqueConstraint
-from sqlalchemy.orm import declarative_base, sessionmaker, Mapped, mapped_column, relationship
+from sqlalchemy import (
+    create_engine,
+    Column,
+    Integer,
+    String,
+    LargeBinary,
+    DateTime,
+    ForeignKey,
+    Computed,
+    UniqueConstraint,
+)
+from sqlalchemy.orm import (
+    declarative_base,
+    sessionmaker,
+    Mapped,
+    mapped_column,
+    relationship,
+)
 
 from datetime import datetime
 
@@ -23,7 +39,7 @@ def with_db(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        if 'db' in kwargs and kwargs['db'] is not None:
+        if "db" in kwargs and kwargs["db"] is not None:
             return func(*args, **kwargs)  # 复用外部 session
         db = SessionLocal()  # 创建新session
         try:

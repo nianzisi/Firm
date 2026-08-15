@@ -1,10 +1,26 @@
 """数据"""
+
 from functools import wraps
 from typing import Optional, List
 
-from sqlalchemy import create_engine, Column, Integer, String, LargeBinary, DateTime, ForeignKey, Computed, \
-    UniqueConstraint
-from sqlalchemy.orm import declarative_base, sessionmaker, Mapped, mapped_column, relationship
+from sqlalchemy import (
+    create_engine,
+    Column,
+    Integer,
+    String,
+    LargeBinary,
+    DateTime,
+    ForeignKey,
+    Computed,
+    UniqueConstraint,
+)
+from sqlalchemy.orm import (
+    declarative_base,
+    sessionmaker,
+    Mapped,
+    mapped_column,
+    relationship,
+)
 
 from datetime import datetime
 from commomd.mind import Base
@@ -18,6 +34,7 @@ class User(Base):
     creat_time:
     token: hash
     token_exist_time:"""
+
     __tablename__ = "user"
 
     id: Mapped[int] = mapped_column(primary_key=True, nullable=False)  # 主键
@@ -30,28 +47,28 @@ class User(Base):
 
 class Item(Base):
     """物品基础信息表（静态属性）"""
+
     __tablename__ = "item"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
     grade: Mapped[int] = mapped_column(nullable=False, default=1)
-    shopping_price: Mapped[Optional[int]] = mapped_column(nullable=True, default=None)  # NULL 表示不可出售
+    shopping_price: Mapped[Optional[int]] = mapped_column(
+        nullable=True, default=None
+    )  # NULL 表示不可出售
 
     # 种子
     seed_items: Mapped["Plan_Seed"] = relationship(
-        back_populates="item",
-        cascade="all, delete-orphan"
+        back_populates="item", cascade="all, delete-orphan"
     )
 
     # 关系（一对多）收获物
     reward_associations: Mapped[List["SeedRewardAssociation"]] = relationship(
-        back_populates="item",
-        cascade="all, delete-orphan"
+        back_populates="item", cascade="all, delete-orphan"
     )
     # 背包
     backpack_items: Mapped[List["Backpack"]] = relationship(
-        back_populates="item",
-        cascade="all, delete-orphan"
+        back_populates="item", cascade="all, delete-orphan"
     )
 
     enemy_item = relationship("Enemy_item", back_populates="item")
@@ -62,7 +79,8 @@ class Item(Base):
 # ============================================
 class SeedRewardAssociation(Base):
     """种子的奖励配置（一个种子可以有多条奖励）"""
-    __tablename__ = 'seed_reward_association'
+
+    __tablename__ = "seed_reward_association"
 
     id: Mapped[int] = mapped_column(primary_key=True)  # ✅ 加个自增主键，方便管理
 
@@ -70,15 +88,15 @@ class SeedRewardAssociation(Base):
     rewards_chance: Mapped[float] = mapped_column(nullable=False)
 
     # 外键
-    seed_id: Mapped[int] = mapped_column(ForeignKey('plan_seed.id'), nullable=False)
-    item_id: Mapped[int] = mapped_column(ForeignKey('item.id'), nullable=False)
+    seed_id: Mapped[int] = mapped_column(ForeignKey("plan_seed.id"), nullable=False)
+    item_id: Mapped[int] = mapped_column(ForeignKey("item.id"), nullable=False)
 
     # 关系
     seed: Mapped["Plan_Seed"] = relationship(back_populates="rewards")
     item: Mapped["Item"] = relationship(back_populates="reward_associations")
 
     __table_args__ = (
-        UniqueConstraint('seed_id', 'item_id', name='uq_seed_reward'),  # 组合唯一约束
+        UniqueConstraint("seed_id", "item_id", name="uq_seed_reward"),  # 组合唯一约束
     )
 
 
@@ -87,6 +105,7 @@ class SeedRewardAssociation(Base):
 # ============================================
 class Plan_Seed(Base):
     """植物种子"""
+
     __tablename__ = "plan_seed"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -94,11 +113,9 @@ class Plan_Seed(Base):
     mature_amount: Mapped[int] = mapped_column(nullable=False)
     comment: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
-    item_id: Mapped[int] = mapped_column(ForeignKey(
-        "item.id",
-        ondelete='CASCADE'),
-        unique=True,
-        nullable=False)
+    item_id: Mapped[int] = mapped_column(
+        ForeignKey("item.id", ondelete="CASCADE"), unique=True, nullable=False
+    )
 
     # item
     item: Mapped["Item"] = relationship(back_populates="seed_items")
@@ -106,11 +123,11 @@ class Plan_Seed(Base):
     # 关系（一对多）
     rewards: Mapped[List["SeedRewardAssociation"]] = relationship(
         back_populates="seed",
-        cascade="all, delete-orphan"  # 删除种子时自动删除奖励配置
+        cascade="all, delete-orphan",  # 删除种子时自动删除奖励配置
     )
     firms: Mapped[List["Firm"]] = relationship(
         back_populates="plan_owner",
-        cascade="all, delete-orphan"  # 删除种子时自动删除关联的土地
+        cascade="all, delete-orphan",  # 删除种子时自动删除关联的土地
     )
 
 
@@ -119,6 +136,7 @@ class Plan_Seed(Base):
 # ============================================
 class Firm(Base):
     """土地表"""
+
     __tablename__ = "firm"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -127,15 +145,15 @@ class Firm(Base):
     extra_amount: Mapped[int] = mapped_column(nullable=False, default=0)
 
     plan_id: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("plan_seed.id", ondelete="SET NULL"),  # ✅ 删除种子时，土地保留但 plan_id 置 NULL
+        ForeignKey(
+            "plan_seed.id", ondelete="SET NULL"
+        ),  # ✅ 删除种子时，土地保留但 plan_id 置 NULL
         nullable=True,
-        default=None
+        default=None,
     )
 
     # 关系
-    plan_owner: Mapped[Optional["Plan_Seed"]] = relationship(
-        back_populates="firms"
-    )
+    plan_owner: Mapped[Optional["Plan_Seed"]] = relationship(back_populates="firms")
 
 
 # ============================================
@@ -148,6 +166,7 @@ class Backpack(Base):
     amount: 数量
     item_id: item_id
     """
+
     __tablename__ = "backpack"
 
     id: Mapped[int] = mapped_column(primary_key=True)

@@ -30,5 +30,3 @@ def player_att_change(user):
 
     else:
         return {}
-
-

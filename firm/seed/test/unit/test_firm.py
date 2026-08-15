@@ -1,4 +1,5 @@
 """仅仅测试Action类，其余类的多是参数拼接与简单查询，基本都是IDE的识别错误(非业务逻辑错误)。不予单元测试"""
+
 from pytest_mock import MockerFixture
 
 from seed.firm import Action

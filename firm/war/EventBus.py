@@ -3,6 +3,7 @@
 
 class EventBus:
     """事件监听器类"""
+
     _instance = None  # 类变量，存唯一实例
 
     def __new__(cls):
@@ -63,17 +64,16 @@ def event_emit(*, category: str, result_name: str, **data):
 
 class Logger:
     """日志"""
+
     _instance = None  # 类变量，存唯一实例
 
-    _level = {"level": 2,  # 控制输出等级
-
-              "print": 3,
-
-              "waring": 3,
-
-              "bug": 1,
-
-              "debug": 3}
+    _level = {
+        "level": 2,  # 控制输出等级
+        "print": 3,
+        "waring": 3,
+        "bug": 1,
+        "debug": 3,
+    }
 
     def __new__(cls):
         if cls._instance is None:  # 还没创建过
@@ -86,7 +86,7 @@ class Logger:
             "print": [self._prints],
             "waring": [self._waring_prints],
             "bug": [self._debug_prints],
-            "debug": []
+            "debug": [],
         }  # 初始化
 
     def set_level(self, who: str, level: int):
@@ -104,6 +104,7 @@ class Logger:
     def _debug_prints(comment: str, *args, **kwargs):
         print(f"\033[31m{comment}\033[0m")
         import sys
+
         exc_type, exc_value, exc_traceback = sys.exc_info()
         print(f"当前异常: {exc_type, exc_value, exc_traceback}")  # ← 看看当前是什么异常
         import traceback
@@ -153,6 +154,7 @@ def logger_emit(level: str, comment: str):
 
 
 if __name__ == "__main__":
+
     def test_base(level: str):
         @logger_emit(level, "日志emit测试失败")
         def test(box: list):
@@ -161,7 +163,6 @@ if __name__ == "__main__":
 
         test(1)
         test([])
-
 
     test_base("print")
     test_base("waring")

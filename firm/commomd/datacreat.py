@@ -2,7 +2,7 @@ from seed.data import Backpack, Firm, Plan_Seed, SeedRewardAssociation, Item, Us
 from war.Attribute import Enemy_item, Enemy, Player
 from commomd.mind import Base, engine
 
-print(Enemy)          # 如果报错 NameError，说明类没定义成功
+print(Enemy)  # 如果报错 NameError，说明类没定义成功
 print(Enemy_item)
 print(Player)
 

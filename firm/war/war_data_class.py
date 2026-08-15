@@ -10,7 +10,6 @@ from commomd.attribute_change import player_att_change
 
 
 class data_base:
-
     def __init__(self, model):
         self.model = model
 
@@ -21,7 +20,9 @@ class data_base:
         return data_del(model_class=self.model, the_id=the_id)
 
     def data_change(self, dir_name, the_id, value):
-        return data_change(model_class=self.model, dir_name=dir_name, the_id=the_id, change_value=value)
+        return data_change(
+            model_class=self.model, dir_name=dir_name, the_id=the_id, change_value=value
+        )
 
     def data_search(self, the_id=None, **kwargs):
         return data_search(model_class=self.model, the_id=the_id, **kwargs)
@@ -45,9 +46,11 @@ class Player_class(data_base):
     def att_change(self):
         result = player_att_change(self.attribute)
         if result:
-            result = result | {"name": self.attribute.name,
-                               "ID": self.attribute.id,
-                               "tab_name": "player"}
+            result = result | {
+                "name": self.attribute.name,
+                "ID": self.attribute.id,
+                "tab_name": "player",
+            }
             self.action = creat_enemy(**result)
         return self
 
@@ -58,7 +61,6 @@ class Player_class(data_base):
 
 
 class Enemy_class(data_base):
-
     def __init__(self, the_id):
         super().__init__(Enemy)
         self.the_id = the_id
@@ -74,9 +76,11 @@ class Enemy_class(data_base):
     def att_change(self):
         result = player_att_change(self.attribute)
         if result:
-            result = result | {"name": self.attribute.name,
-                               "ID": self.attribute.id,
-                               "tab_name": "enemy"}
+            result = result | {
+                "name": self.attribute.name,
+                "ID": self.attribute.id,
+                "tab_name": "enemy",
+            }
             self.action = creat_player(**result)
         return self
 
@@ -84,6 +88,3 @@ class Enemy_class(data_base):
         self.get_base_attribute()
         self.att_change()
         return self.action
-
-
-

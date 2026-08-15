@@ -1,6 +1,7 @@
 """土地种植规则
-    涉及到提交的，由调用端统一传入db
-    仅查询可以直接忽略db传入"""
+涉及到提交的，由调用端统一传入db
+仅查询可以直接忽略db传入"""
+
 import random
 import time
 
@@ -13,7 +14,7 @@ from .error import *
 
 
 class Item:
-    """关于物品的操作 """
+    """关于物品的操作"""
 
     @with_db
     def create_item(self, *, name, grade, shopping_price, db=None) -> int:
@@ -29,13 +30,15 @@ class Item:
         return item.id
 
     @with_db
-    def search_item(self,
-                    *,
-                    item_id: None | int = None,
-                    name: None | str = None,
-                    grade: None | int = None,
-                    shopping_price: None | int = None,
-                    db=None) -> list[dict, dict]:
+    def search_item(
+        self,
+        *,
+        item_id: None | int = None,
+        name: None | str = None,
+        grade: None | int = None,
+        shopping_price: None | int = None,
+        db=None,
+    ) -> list[dict, dict]:
         """
         支持多段搜索(至少有一个)
         :param item_id: id
@@ -60,12 +63,14 @@ class Item:
         result = query.all()
         if result:
             for one in result:
-                msg.append({
-                    "id": one.id,
-                    "name": one.name,
-                    "grade": one.grade,
-                    "shopping": one.shopping_price
-                })
+                msg.append(
+                    {
+                        "id": one.id,
+                        "name": one.name,
+                        "grade": one.grade,
+                        "shopping": one.shopping_price,
+                    }
+                )
             return msg
         return []
 
@@ -111,11 +116,13 @@ class Firm:
         land = db.get(Firm_Sheet, firm_id)
         if land is None:
             return {}
-        msg = {"land.id": land.id,
-               "land.level": land.level,
-               "land.plan_time": land.plan_time,
-               "land.plan_id": land.plan_id,
-               "land.extra_amount": land.extra_amount}
+        msg = {
+            "land.id": land.id,
+            "land.level": land.level,
+            "land.plan_time": land.plan_time,
+            "land.plan_id": land.plan_id,
+            "land.extra_amount": land.extra_amount,
+        }
         return msg
 
     @with_db
@@ -128,13 +135,15 @@ class Firm:
         land = db.query(Firm_Sheet).all()
         if land:
             for one in land:
-                msg.append({
-                    "id": one.id,
-                    "level": one.level,
-                    "plan_time": one.plan_time,
-                    "extra_amount": one.extra_amount,
-                    "plan_id": one.plan_id
-                })
+                msg.append(
+                    {
+                        "id": one.id,
+                        "level": one.level,
+                        "plan_time": one.plan_time,
+                        "extra_amount": one.extra_amount,
+                        "plan_id": one.plan_id,
+                    }
+                )
             return msg
         return []
 
@@ -164,6 +173,7 @@ class Firm:
         if seed and land:
             land.plan_id = seed.id
             from seed.founction import maturity_time
+
             land.plan_time = maturity_time(land_id=land.id, seed_id=seed.id)
             return True
         return False
@@ -190,8 +200,9 @@ class Seed:
     """关于种子的"""
 
     @with_db
-    def create_plan_seed(self, *, item_id: int, mature_time: int, mature_amount: int,
-                         db=None) -> int:
+    def create_plan_seed(
+        self, *, item_id: int, mature_time: int, mature_amount: int, db=None
+    ) -> int:
         """
         创建新种子
 
@@ -204,9 +215,7 @@ class Seed:
         if seed := db.query(Plan_Seed).filter(Plan_Seed.item_id == item_id).first():
             return seed.id
         plan_seed = Plan_Seed(
-            item_id=item_id,
-            mature_time=mature_time,
-            mature_amount=mature_amount
+            item_id=item_id, mature_time=mature_time, mature_amount=mature_amount
         )
 
         db.add(plan_seed)
@@ -225,9 +234,11 @@ class Seed:
         if plan is None:
             return {}
 
-        msg = {"id": plan.id,
-               "mature_time": plan.mature_time,
-               "mature_amount": plan.mature_amount}
+        msg = {
+            "id": plan.id,
+            "mature_time": plan.mature_time,
+            "mature_amount": plan.mature_amount,
+        }
         return msg
 
     def seed_empty(self, plan_id) -> bool:
@@ -251,15 +262,20 @@ class Rewards:
         :param db: 默认接口
         :return: bool
         """
-        if db.query(SeedRewardAssociation).filter(SeedRewardAssociation.seed_id == plan_seed,
-                                                  SeedRewardAssociation.item_id == item_id,
-                                                  ).first():
+        if (
+            db.query(SeedRewardAssociation)
+            .filter(
+                SeedRewardAssociation.seed_id == plan_seed,
+                SeedRewardAssociation.item_id == item_id,
+            )
+            .first()
+        ):
             return False
         association = SeedRewardAssociation(
             seed_id=plan_seed,
             item_id=item_id,
             rewards_amount=1,  # 需要指定掉落数量
-            rewards_chance=1.0  # 需要指定掉落概率
+            rewards_chance=1.0,  # 需要指定掉落概率
         )
         db.add(association)
 
@@ -297,32 +313,34 @@ class Back_bag(Item):
         bag = db.query(Backpack).all()
         if bag:
             for one in bag:
-                msg.append({
-                    "id": one.id,
-                    "name": one.item.name,
-                    "amount": one.amount,
-                    "grade": one.item.grade
-                })
+                msg.append(
+                    {
+                        "id": one.id,
+                        "name": one.item.name,
+                        "amount": one.amount,
+                        "grade": one.item.grade,
+                    }
+                )
             return msg
         return []
 
     @with_db
     def search_bag_seed(self, db=None):
         msg = []
-        results = db.query(Backpack, Item_Sheet, Plan_Seed).join(
-            Item, Backpack.item_id == Item_Sheet.id
-        ).join(
-            Plan_Seed, Item_Sheet.id == Plan_Seed.item_id
-        ).all()
+        results = (
+            db.query(Backpack, Item_Sheet, Plan_Seed)
+            .join(Item, Backpack.item_id == Item_Sheet.id)
+            .join(Plan_Seed, Item_Sheet.id == Plan_Seed.item_id)
+            .all()
+        )
         for bag, item, seed in results:
-            msg.append({
-                "name": item.name,
-                "id": seed.id
-            })
+            msg.append({"name": item.name, "id": seed.id})
         return msg
 
     @with_db
-    def search_bag_item(self, *, item_id: int | None = None, name: int | None = None, db=None) -> bool:
+    def search_bag_item(
+        self, *, item_id: int | None = None, name: int | None = None, db=None
+    ) -> bool:
         """
         查询背包是否有id物品
         :param item_id:id
@@ -348,16 +366,14 @@ class Back_bag(Item):
         :return: Ture:添加成功
         """
         if self.search_item(item_id=item_id):
-
             if bag_id := self.search_bag_item(item_id=item_id):
-                db.query(Backpack).filter(Backpack.id == bag_id).first().amount += amount
+                db.query(Backpack).filter(
+                    Backpack.id == bag_id
+                ).first().amount += amount
                 db.flush()
                 return True
             else:
-                item = Backpack(
-                    amount=amount,
-                    item_id=item_id
-                )
+                item = Backpack(amount=amount, item_id=item_id)
                 db.add(item)
                 db.flush()
                 return True
@@ -453,9 +469,7 @@ class Action(Firm, Seed, Rewards, Back_bag):
         if id_list:
             for item_id, amount, change in id_list:
                 if random.random() < change:
-                    msg = self.add_bag_item(item_id=item_id,
-                                            amount=amount,
-                                            db=db)
+                    msg = self.add_bag_item(item_id=item_id, amount=amount, db=db)
                     if not msg:
                         mes.append(f"物品{item_id}添加失败")
                         continue

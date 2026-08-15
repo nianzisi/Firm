@@ -5,9 +5,8 @@ from commomd.mind import Base
 
 
 class Player(Base):
-    """
+    """ """
 
-    """
     __tablename__ = "player"
 
     id: Mapped[int] = mapped_column(primary_key=True, nullable=False)  # 主键
@@ -49,6 +48,7 @@ class Enemy(Base):
     """
     怪物表
     """
+
     __tablename__ = "enemy"
 
     id: Mapped[int] = mapped_column(primary_key=True, nullable=False)  # 主键
@@ -77,4 +77,3 @@ class Enemy_item(Base):
 
     enemy = relationship("Enemy", back_populates="enemy_item")
     item = relationship("Item", back_populates="enemy_item")
-

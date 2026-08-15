@@ -65,7 +65,6 @@ class Data_base:
 
 
 class Action:
-
     def __init__(self, owner):
         self.owner = owner
 
@@ -140,8 +139,9 @@ class Player(Data_base):
 
     # 普通的slots, 允许注册的类, 手动过滤 ,如果性能差，后续考虑用rust，重写Enemy类
 
-    def __init__(self, ID, name, ATK, DEF, AGI, HP, Attack, Defense, Action_top, tab_name):
-        ...
+    def __init__(
+        self, ID, name, ATK, DEF, AGI, HP, Attack, Defense, Action_top, tab_name
+    ): ...
 
     def __post__init__(self):
         super().__post__init__()
@@ -161,8 +161,9 @@ class Enemy(Data_base):
 
     # 普通的slots, 允许注册的类, 手动过滤 ,如果性能差，后续考虑用rust，重写Enemy类
 
-    def __init__(self, ID, name, ATK, DEF, AGI, HP, Attack, Defense, Action_top, tab_name):
-        ...
+    def __init__(
+        self, ID, name, ATK, DEF, AGI, HP, Attack, Defense, Action_top, tab_name
+    ): ...
 
     def __post__init__(self):
         super().__post__init__()
@@ -270,12 +271,14 @@ class Battle(Battle_base):
             defense = target.Defense.defense()
             _number = max(0, damage - defense)
             target.Action_top.hit(_number)
-            return {"攻击者id": action.ID,
-                    "攻击者tab_name": action.tab_name,
-                    "受伤者id": target.ID,
-                    "受伤者tab_name": target.tab_name,
-                    "伤害": f"{_number:.2f}",
-                    "受伤者剩余血量": f"{target.HP:.2f}"}
+            return {
+                "攻击者id": action.ID,
+                "攻击者tab_name": action.tab_name,
+                "受伤者id": target.ID,
+                "受伤者tab_name": target.tab_name,
+                "伤害": f"{_number:.2f}",
+                "受伤者剩余血量": f"{target.HP:.2f}",
+            }
 
     def battle_run(self):
         """
@@ -289,25 +292,59 @@ class Battle(Battle_base):
             round_battle += 1
             mover = self.battle_move()
             for _mover in mover:
-                logging_battle.append(f"第{round_battle}回合:{self.fight(_mover, self.pick(_mover))}")
+                logging_battle.append(
+                    f"第{round_battle}回合:{self.fight(_mover, self.pick(_mover))}"
+                )
         return logging_battle
         #  结算逻辑
 
 
 if __name__ == "__main__":
-    player = Player(tab_name="玩家", ID=1, name="玩家", HP=100, ATK=15, DEF=5, AGI=1.2,
-                    Attack=Attack, Defense=Defense, Action_top=Action_top)
-    enemy = Enemy(tab_name="精英怪物", ID=23, name="怪物", HP=80, ATK=10, DEF=3, AGI=0.8,
-                  Attack=Attack, Defense=Defense, Action_top=Action_top)
-    enemy2 = Enemy(tab_name="普通怪物", ID=24, name="怪物", HP=130, ATK=1, DEF=3, AGI=0.8,
-                   Attack=Attack, Defense=Defense, Action_top=Action_top)
+    player = Player(
+        tab_name="玩家",
+        ID=1,
+        name="玩家",
+        HP=100,
+        ATK=15,
+        DEF=5,
+        AGI=1.2,
+        Attack=Attack,
+        Defense=Defense,
+        Action_top=Action_top,
+    )
+    enemy = Enemy(
+        tab_name="精英怪物",
+        ID=23,
+        name="怪物",
+        HP=80,
+        ATK=10,
+        DEF=3,
+        AGI=0.8,
+        Attack=Attack,
+        Defense=Defense,
+        Action_top=Action_top,
+    )
+    enemy2 = Enemy(
+        tab_name="普通怪物",
+        ID=24,
+        name="怪物",
+        HP=130,
+        ATK=1,
+        DEF=3,
+        AGI=0.8,
+        Attack=Attack,
+        Defense=Defense,
+        Action_top=Action_top,
+    )
 
-    print(isinstance(player, Player))  # Ture, 注意：__main__.Player 和 attalk.Player是不同的
+    print(
+        isinstance(player, Player)
+    )  # Ture, 注意：__main__.Player 和 attalk.Player是不同的
 
-    from  paymentcontrol import Control
+    from paymentcontrol import Control
 
     msg = Battle([player, enemy, enemy2]).battle_run()
-    msg2 =Control.data_handle(msg)
+    msg2 = Control.data_handle(msg)
     msg3 = Control.out_handle(msg2)
 
     for i in msg3:

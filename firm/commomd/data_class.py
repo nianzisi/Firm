@@ -14,8 +14,7 @@ def data_common_id_assess(the_id) -> dict:
     if _bool:
         return {"success": True}
     else:
-        return {"success": False,
-                "because": f"{the_id}不是int类型"}
+        return {"success": False, "because": f"{the_id}不是int类型"}
 
 
 def data_common_table_assess(model_class) -> dict:
@@ -27,8 +26,10 @@ def data_common_table_assess(model_class) -> dict:
     if hasattr(model_class, "__table__"):
         return {"success": True}
     else:
-        return {"success": False,
-                "because": f"{model_class.__name__}不是sqlalchemy模块建立的类"}
+        return {
+            "success": False,
+            "because": f"{model_class.__name__}不是sqlalchemy模块建立的类",
+        }
 
 
 @with_db
@@ -45,11 +46,15 @@ def data_change_base(model_class, dir_name, the_id, change_value, db=None) -> di
     col = db.get(model_class, the_id)
     if col:
         setattr(col, dir_name, change_value)
-        return {"success": True,
-                "msg": f"已修改{model_class.__name__}的{dir_name}的值为{change_value}"}
+        return {
+            "success": True,
+            "msg": f"已修改{model_class.__name__}的{dir_name}的值为{change_value}",
+        }
     else:
-        return {"success": False,
-                "msg": f"{model_class.__name__}的主键，没有值为{the_id}的"}
+        return {
+            "success": False,
+            "msg": f"{model_class.__name__}的主键，没有值为{the_id}的",
+        }
 
 
 def data_change_handle(model_class, dir_name, change_value) -> dict:
@@ -65,24 +70,34 @@ def data_change_handle(model_class, dir_name, change_value) -> dict:
         if _name == dir_name:
             if not _obj.nullable:
                 if change_value is None:
-                    return {"success": False,
-                            "because": f"{model_class.__name__}的{dir_name}属性不能为None"}
+                    return {
+                        "success": False,
+                        "because": f"{model_class.__name__}的{dir_name}属性不能为None",
+                    }
 
             if isinstance(_obj.type, String):
                 if not isinstance(change_value, str):
-                    return {"success": False,
-                            "because": f"{model_class.__name__}的{dir_name}属性为str, 待更改值为{type(change_value)}"}
+                    return {
+                        "success": False,
+                        "because": f"{model_class.__name__}的{dir_name}属性为str, 待更改值为{type(change_value)}",
+                    }
                 if change_value.strip() == "":
-                    return {"success": False,
-                            "because": f"{model_class.__name__}的{dir_name}属性为str, 待更改值不能为''"}
+                    return {
+                        "success": False,
+                        "because": f"{model_class.__name__}的{dir_name}属性为str, 待更改值不能为''",
+                    }
             if isinstance(_obj.type, Integer):
                 if not isinstance(change_value, int):
-                    return {"success": False,
-                            "because": f"{model_class.__name__}的{dir_name}属性为int, 待更改值为{type(change_value)}"}
+                    return {
+                        "success": False,
+                        "because": f"{model_class.__name__}的{dir_name}属性为int, 待更改值为{type(change_value)}",
+                    }
             if _obj.primary_key:
                 if not isinstance(change_value, int):
-                    return {"success": False,
-                            "because": f"{model_class.__name__}的{dir_name}属性为主键, 待更改值为{type(change_value)}"}
+                    return {
+                        "success": False,
+                        "because": f"{model_class.__name__}的{dir_name}属性为主键, 待更改值为{type(change_value)}",
+                    }
     return {"success": True}
 
 
@@ -118,11 +133,15 @@ def data_del_base(model_class, the_id, db=None) -> dict:
     if col:
         db.delete(col)
 
-        return {"success": True,
-                "del": f"已删除{model_class.__name__}中id为{the_id}的数据"}
+        return {
+            "success": True,
+            "del": f"已删除{model_class.__name__}中id为{the_id}的数据",
+        }
     else:
-        return {"success": False,
-                "msg": f"{model_class.__name__}的主键，没有值为{the_id}的"}
+        return {
+            "success": False,
+            "msg": f"{model_class.__name__}的主键，没有值为{the_id}的",
+        }
 
 
 def data_del(*, model_class, the_id: int, db=None) -> dict:
@@ -142,16 +161,17 @@ def data_del(*, model_class, the_id: int, db=None) -> dict:
 
 @with_db
 def data_add_base(data_obj, db=None) -> dict:
-    """
+    (
+        """
     只接受符合要求的实例
     :param data_obj:要创建的实例 
     :param db: 默认
     :return: dict
-    """""
+    """
+        ""
+    )
     db.add(data_obj)
-    return {"success": True,
-            "self_dir": data_obj.__dict__
-            }
+    return {"success": True, "self_dir": data_obj.__dict__}
 
 
 def data_add_handle(data_obj, model_class) -> list:
@@ -169,7 +189,7 @@ def data_add_handle(data_obj, model_class) -> list:
     # 2. 获取实际数据
     actual_data = {}
     for key, value in data_obj.__dict__.items():
-        if not key.startswith('_'):
+        if not key.startswith("_"):
             actual_data[key] = value
 
     # 3. 检查必填字段
@@ -191,7 +211,7 @@ def data_add_handle(data_obj, model_class) -> list:
                 errors.append(f"字段 '{col_name}' 应该是整数类型")
 
             # 检查长度
-            if hasattr(col.type, 'length') and isinstance(value, str):
+            if hasattr(col.type, "length") and isinstance(value, str):
                 if len(value) > col.type.length:
                     errors.append(f"字段 '{col_name}' 长度不能超过 {col.type.length}")
 
@@ -217,14 +237,19 @@ def data_add(*, data_obj, model_class, db=None) -> dict:
         if not error:
             return data_add_base(data_obj, db=db)
         else:
-            return {"success": False,
-                    "because": error}
+            return {"success": False, "because": error}
     else:
         return msg
 
 
 @with_db
-def data_search(*, model_class, the_id=None, db=None, **kwargs, ) -> dict:
+def data_search(
+    *,
+    model_class,
+    the_id=None,
+    db=None,
+    **kwargs,
+) -> dict:
     """
     好像没有什么边界要求，全靠自觉
     :param model_class: 表类
@@ -238,13 +263,13 @@ def data_search(*, model_class, the_id=None, db=None, **kwargs, ) -> dict:
         if result["success"]:
             _i = db.get(model_class, the_id)
             if _i:
-                return {"success": True,
-                        "msg": _i}
-            return {"success": False,
-                    "msg": f"{model_class.__name__}的主键，没有值为{the_id}的"}
+                return {"success": True, "msg": _i}
+            return {
+                "success": False,
+                "msg": f"{model_class.__name__}的主键，没有值为{the_id}的",
+            }
     query = db.query(model_class)
     for _dir, _value in kwargs.items():
         query = query.filter(getattr(model_class, _dir) == _value)
     result = query.all()
-    return {"success": True,
-            "msg": result}
+    return {"success": True, "msg": result}
