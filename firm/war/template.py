@@ -1,6 +1,6 @@
-from attalk import Enemy
-from attalk import Player
-from attalk import Attack, Defense, Action_top
+from war.attalk import Enemy
+from war.attalk import Player
+from war.attalk import Attack, Defense, Action_top
 
 
 def creat_player(**kwargs):

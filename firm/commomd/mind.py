@@ -12,7 +12,7 @@ from datetime import datetime
 DATABASE_URL = "mysql+pymysql://root:@127.0.0.1:3306/planfirm"
 engine = create_engine(DATABASE_URL, echo=False)  # echo=True 会在控制台打印 SQL 语句
 
-SessionLocal = sessionmaker(bind=engine)
+SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 
 # 2. 定义 ORM 基类
 Base = declarative_base()

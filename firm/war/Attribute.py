@@ -14,14 +14,14 @@ class Player(Base):
     name: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
 
     # 四维
-    GenGu: Mapped[int] = mapped_column(LargeBinary(255), nullable=False)
-    BiLi: Mapped[int] = mapped_column(LargeBinary(255), nullable=False)
-    MingJie: Mapped[int] = mapped_column(LargeBinary(255), nullable=False)
-    WuXing: Mapped[int] = mapped_column(LargeBinary(255), nullable=False)
+    GenGu: Mapped[int] = mapped_column(Integer, nullable=False)
+    BiLi: Mapped[int] = mapped_column(Integer, nullable=False)
+    MingJie: Mapped[int] = mapped_column(Integer, nullable=False)
+    WuXing: Mapped[int] = mapped_column(Integer, nullable=False)
 
     # 玩家独有的属性
-    level: Mapped[int] = mapped_column(LargeBinary(255), nullable=False)
-    CurrentEXP: Mapped[int] = mapped_column(LargeBinary(255), nullable=False)
+    level: Mapped[int] = mapped_column(Integer, nullable=False)
+    CurrentEXP: Mapped[int] = mapped_column(Integer, nullable=False)
 
     @validates("GenGu", "BiLi", "MingJie", "WuXing", "level")
     def test(self, key, value) -> int:
@@ -55,12 +55,12 @@ class Enemy(Base):
     name: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
 
     # 属性
-    GenGu: Mapped[int] = mapped_column(LargeBinary(255), nullable=False)
-    BiLi: Mapped[int] = mapped_column(LargeBinary(255), nullable=False)
-    MingJie: Mapped[int] = mapped_column(LargeBinary(255), nullable=False)
-    WuXing: Mapped[int] = mapped_column(LargeBinary(255), nullable=False)
+    GenGu: Mapped[int] = mapped_column(Integer, nullable=False)
+    BiLi: Mapped[int] = mapped_column(Integer, nullable=False)
+    MingJie: Mapped[int] = mapped_column(Integer, nullable=False)
+    WuXing: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    enemy_item = relationship("enemy_item", back_populates="enemy")
+    enemy_item = relationship("Enemy_item", back_populates="enemy")
 
 
 class Enemy_item(Base):
@@ -73,10 +73,8 @@ class Enemy_item(Base):
     id: Mapped[int] = mapped_column(primary_key=True, nullable=False)  # 主键
     item_id: Mapped[int] = mapped_column(ForeignKey("item.id"))
     enemy_id: Mapped[int] = mapped_column(ForeignKey("enemy.id"))
-    count: Mapped[int] = mapped_column(LargeBinary(255), nullable=False)
+    count: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    enemy = relationship("enemy", back_populates="enemy_item")
-    item = relationship("item", back_populates="enemy_item")
+    enemy = relationship("Enemy", back_populates="enemy_item")
+    item = relationship("Item", back_populates="enemy_item")
 
-
-print("war/Attribute.py 中的 Base 地址:", id(Base))

@@ -54,7 +54,7 @@ class Item(Base):
         cascade="all, delete-orphan"
     )
 
-    enemy_item = relationship("enemy_item", back_populates="item")
+    enemy_item = relationship("Enemy_item", back_populates="item")
 
 
 # ============================================

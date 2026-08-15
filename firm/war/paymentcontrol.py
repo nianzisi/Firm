@@ -1,9 +1,9 @@
 import ast
 import re
 
-from win_reward import Win_end
-from attalk import Battle
-from Attribute import Enemy
+from war.win_reward import Win_end
+from war.attalk import Battle
+from war.Attribute import Enemy
 
 
 class Control:

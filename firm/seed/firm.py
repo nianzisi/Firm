@@ -4,8 +4,8 @@
 import random
 import time
 
-from .data import Firm as Firm_Sheet, SeedRewardAssociation, Item as Item_Sheet
-from .data import Plan_Seed, Backpack
+from seed.data import Firm as Firm_Sheet, SeedRewardAssociation, Item as Item_Sheet
+from seed.data import Plan_Seed, Backpack
 
 from commomd.mind import with_db
 

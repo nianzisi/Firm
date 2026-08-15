@@ -1,5 +1,5 @@
 # win_reward.py
-from Attribute import Enemy_item
+from war.Attribute import Enemy_item
 from commomd.mind import with_db
 from seed.firm import Back_bag
 

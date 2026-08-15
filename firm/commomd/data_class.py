@@ -224,7 +224,7 @@ def data_add(*, data_obj, model_class, db=None) -> dict:
 
 
 @with_db
-def data_search(model_class, the_id=None, db=None, **kwargs, ) -> dict:
+def data_search(*, model_class, the_id=None, db=None, **kwargs, ) -> dict:
     """
     好像没有什么边界要求，全靠自觉
     :param model_class: 表类

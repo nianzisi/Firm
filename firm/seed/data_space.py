@@ -1,6 +1,6 @@
 """数据的上下文窗口"""
 
-from .firm import Firm, Seed
+from seed.firm import Firm, Seed
 
 
 class Data(Firm, Seed):

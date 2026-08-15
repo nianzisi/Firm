@@ -1,6 +1,6 @@
 """战斗逻辑,尝试使用类装饰器. pass为待做或者待扩展标识"""
 
-from error import Player_Creat_Error
+from war.error import Player_Creat_Error
 
 
 def dataclass(cls):
