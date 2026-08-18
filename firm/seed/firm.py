@@ -18,6 +18,14 @@ class Item:
 
     @with_db
     def create_item(self, *, name, grade, shopping_price, db=None) -> int:
+        """
+        创建物品
+        :param name: 名称
+        :param grade: 等级
+        :param shopping_price: 价值
+        :param db: 默认
+        :return: id
+        """
         if item := db.query(Item_Sheet).filter(Item_Sheet.name == name).first():
             return item.id
         item = Item_Sheet(
@@ -326,6 +334,11 @@ class Back_bag(Item):
 
     @with_db
     def search_bag_seed(self, db=None):
+        """
+        搜索背包中的种子
+        :param db: 默认
+        :return: msg
+        """
         msg = []
         results = (
             db.query(Backpack, Item_Sheet, Plan_Seed)

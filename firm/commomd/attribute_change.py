@@ -1,7 +1,12 @@
 """属性转换规则"""
 
 
-def player_att_change(user):
+def player_att_change(user) -> dict:
+    """
+    属性转换
+    :param user: 实例对象
+    :return: 字典
+    """
     attrs = {}
     ATK = 0
     DEF = 0

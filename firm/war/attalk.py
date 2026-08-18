@@ -37,6 +37,7 @@ def dataclass(cls):
 
 @dataclass
 class Data_base:
+    """拥有属性的对象的基类"""
     tab_name: str
     ID: int
     name: str
@@ -48,11 +49,13 @@ class Data_base:
     #  疑惑：把数据库中的数据转换成类，是否多此一举？
 
     def __post__init__(self):
+        """检测必要数值是否存在，不存在报错"""
         for name, number in self.__dict__.items():
             if number is None:
                 raise Player_Creat_Error(f"{name}数值异常")
 
     def get___kwargs(self) -> dict | None:
+        """传递参数"""
         if hasattr(self, "_kwargs"):
             __kwargs = self._kwargs
             del self._kwargs
@@ -60,11 +63,10 @@ class Data_base:
         else:
             return None
 
-    def __call__(self, *args, **kwargs):
-        pass
 
 
 class Action:
+    """动作的父类"""
     def __init__(self, owner):
         self.owner = owner
 
@@ -83,7 +85,6 @@ class Attack(Action):
         damage = self.owner.ATK * self.times
         self.times *= 1.1
         return damage
-        pass
 
 
 class Defense(Action):
@@ -96,7 +97,6 @@ class Defense(Action):
         Def = self.owner.DEF * self.times
         self.times *= 0.9
         return Def
-        pass
 
 
 class Action_top(Action):
@@ -109,6 +109,7 @@ class Action_top(Action):
         self._AGI_All = 1.0
 
     def move(self, speed) -> bool:
+        """行动条计算"""
         self._AGI += speed
         if self._AGI >= self._AGI_All:
             self._AGI -= self._AGI_All
@@ -124,6 +125,7 @@ class Action_top(Action):
         return self.owner.HP
 
     def death(self, target: Data_base) -> bool:
+        """死亡检测"""
         if not target.HP > 0:
             print(f"{target.name}死亡")
             return False
@@ -141,9 +143,10 @@ class Player(Data_base):
 
     def __init__(
         self, ID, name, ATK, DEF, AGI, HP, Attack, Defense, Action_top, tab_name
-    ): ...
+    ): ...  # 仅让IDE支持Player的参数提示
 
     def __post__init__(self):
+        """赋值"""
         super().__post__init__()
         self.dict = self.get___kwargs()
         for _name, _value in self.dict.items():
@@ -163,9 +166,10 @@ class Enemy(Data_base):
 
     def __init__(
         self, ID, name, ATK, DEF, AGI, HP, Attack, Defense, Action_top, tab_name
-    ): ...
+    ): ...  # 仅让IDE支持Player的参数提示
 
     def __post__init__(self):
+        """赋值"""
         super().__post__init__()
         self.dict = self.get___kwargs()
         for _name, _value in self.dict.items():
@@ -176,6 +180,7 @@ class Enemy(Data_base):
 
 
 class Battle_base:
+    """父类"""
     pass  # 待做
 
 
@@ -252,6 +257,7 @@ class Battle(Battle_base):
         return bool(self._player_action and self._enemy_action)
 
     def pick(self, action: Data_base):
+        """选择攻击目标，默认血量最少"""
         player = self._player_action
         enemy = self._enemy_action
         if action in self._player_action:
@@ -266,6 +272,7 @@ class Battle(Battle_base):
         return False
 
     def fight(self, action: Data_base, target: Data_base):
+        """进行攻击，受伤计算，返回战斗日志"""
         if action and target:
             damage = action.Attack.attack()
             defense = target.Defense.defense()
@@ -283,8 +290,7 @@ class Battle(Battle_base):
     def battle_run(self):
         """
         战斗逻辑
-        :param action:
-        :return:
+        :return: 战斗日志
         """
         logging_battle = []
         round_battle = 0
