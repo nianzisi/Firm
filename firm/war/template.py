@@ -4,7 +4,6 @@ from war.attalk import Attack, Defense, Action_top
 
 
 def creat_player(**kwargs):
-    """创建角色模板"""
     _player = Player(
         tab_name=kwargs.get("tab_name"),
         ID=kwargs.get("ID"),
@@ -21,7 +20,6 @@ def creat_player(**kwargs):
 
 
 def creat_enemy(**kwargs):
-    """创建怪物的模板"""
     _enemy = Enemy(
         tab_name=kwargs.get("tab_name"),
         ID=kwargs.get("ID"),

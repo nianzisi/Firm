@@ -37,18 +37,6 @@ async def create_and_link(
     rewards_grade: int = Form(1),
     rewards_price: Optional[int] = Form(None),
 ):
-    """
-    创建种子与物品及其之间的联系
-    :param plan_name: 种子名称
-    :param plan_grade: 种子等级
-    :param plan_price: 种子价值
-    :param mature_time: 成长时间
-    :param mature_amount: 成熟数量
-    :param reward_name: 收获物名称
-    :param rewards_grade: 收获物等级
-    :param rewards_price: 收获物价值
-    :return: 重定向
-    """
     item_id = action.create_item(
         name=plan_name, grade=plan_grade, shopping_price=plan_price
     )
@@ -64,12 +52,6 @@ async def create_and_link(
 
 @app.post("/seeds/link")
 async def link(seed_id: int = Form(...), reward_id: int = Form(...)):
-    """
-    关联种子和收获物
-    :param seed_id: 种子id
-    :param reward_id: 收获物id
-    :return: 重定向
-    """
     action.link_plan_rewards(plan_seed=seed_id, item_id=reward_id)
     return RedirectResponse("/seeds", status_code=303)
 
@@ -78,13 +60,6 @@ async def link(seed_id: int = Form(...), reward_id: int = Form(...)):
 async def create(
     item_id: int = Form(...), mature_time: int = Form(...), mature_amount: int = Form(1)
 ):
-    """
-    给物品赋予种子属性
-    :param item_id: id
-    :param mature_time: 时间
-    :param mature_amount: 数量
-    :return: 重定向
-    """
     action.create_plan_seed(
         item_id=item_id, mature_time=mature_time, mature_amount=mature_amount
     )
@@ -97,13 +72,6 @@ async def create_item(
     grade: int = Form(1),
     shopping_price: Optional[int] = Form(None),
 ):
-    """
-    创建新物品
-    :param name: 名称
-    :param grade: 等级
-    :param shopping_price: 价值
-    :return: 重定向
-    """
     action.create_item(name=name, grade=grade, shopping_price=shopping_price)
     return RedirectResponse("/seeds", status_code=303)
 
@@ -112,13 +80,6 @@ async def create_item(
 def search_items(
     name: str = Query(""), grade: int = Query(None), shopping_price: int = Query(None)
 ):
-    """
-    搜说物品
-    :param name: 名称
-    :param grade: 等级
-    :param shopping_price: 价值
-    :return: 数据
-    """
     return action.search_item(
         name=name or None,
         grade=grade,
