@@ -2,7 +2,12 @@ import os
 from pathlib import Path
 
 
-def creat_env(path: str = r"D:\Seed\firm\agent\os.env"):
+def creat_env(path: str = r"D:\Seed\firm\agent\os.env") -> tuple:
+    """
+    创建LLM的env设置
+    :param path: env地址
+    :return: tuple(bool,list)
+    """
     file_path = Path(path)
     if not file_path.exists():
         raise ValueError(f"Warning: {path} not found")
