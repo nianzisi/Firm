@@ -1,4 +1,6 @@
+import ast
 import inspect
+import json
 import re
 
 
@@ -47,7 +49,7 @@ class Tool_data:
             if times > 10:
                 raise ValueError(f"过多的同名文件{func_name}")
 
-    def out_tool_json(self, category: str = None)  -> list:
+    def out_tool_json(self, category: str = None) -> list:
         """
         输出tool的json格式
         :param category:要输出的类名
@@ -68,9 +70,27 @@ class Tool_data:
             )
         return out_json
 
-    def emit_on(self, ):
-        pass
-        # Todo
+    def emit_on(self, return_tools: dict) -> dict:
+        """
+        执行LLM调用的工具
+        :param return_tools: 返回的数据包
+        {'index': 0,
+         'id': 'call_00_ap9UYtqWx1jhdSvkSjIq0423',
+         'type': 'function',
+         'function': {'name': 'tool__books_tool',
+                      'arguments': '{"name": "布鲁斯"}'}}
+        :return: str,
+        """
+        if return_tools is None:
+            raise ValueError("no way")
+        split = return_tools['function']["name"].split("__", 1)
+        category = self._listeners[split[0]]
+        func = category[split[1]](**json.loads(return_tools['function']["arguments"]))
+        return {
+            "role": "tool",
+            "tool_call_id": return_tools["id"],
+            "content": str(func)
+        }
 
 
 def tool(category: str = "tool"):
@@ -86,6 +106,7 @@ def tool(category: str = "tool"):
         return func
 
     return muld
+
 
 # python类型转换jsonn类型的映射字典
 json_translation = {
@@ -165,17 +186,22 @@ def func_org(func: object, name: str) -> dict:
 
 if __name__ == "__main__":
     @tool()
-    def test_tool(Aad: str, B: int = 1, *args, **kwargs):
+    def books_tool(name: str, B: int = 1) -> str:
         """
         当前是测试用例函数，当前为描述
-        :param Aad: 占位参数
+        :param name: 占位参数
         :param B:占位参数2
-        :param args:其余占位参数
-        :param kwargs:其余占位参数2
         :return:返回值
         """
 
-        return str(Aad + str(B))
+        return str(name + str(B))
 
+
+    C = {'index': 0,
+         'id': 'call_00_ap9UYtqWx1jhdSvkSjIq0423',
+         'type': 'function',
+         'function': {'name': 'tool__books_tool',
+                      'arguments': '{"name": "布鲁斯"}'}}
 
     print(Tool_data().out_tool_json())
+    print(Tool_data().emit_on(C))
